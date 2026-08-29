@@ -1,0 +1,4 @@
+interface:
+  display_name: "场景提示词"
+  short_description: "用关系压力、胶片色彩和反AI质感生成电影场景提示词"
+  default_prompt: "使用 $scene-prompt，先判断关系压力、视线流量和成像介质，再把我的场景扩写成可直接使用的英文提示词。"
