@@ -1,0 +1,4 @@
+interface:
+  display_name: "xxd-brand-system"
+  short_description: "Create brand color governance and usage rules"
+  default_prompt: "Use /xxd-brand-system to build a reusable brand color system from Chinese traditional colors."

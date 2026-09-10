@@ -1,0 +1,4 @@
+interface:
+  display_name: "xxd-palette-builder"
+  short_description: "Choose role-based palettes from too many color options"
+  default_prompt: "Use /xxd-palette-builder to create a practical Chinese traditional color palette."

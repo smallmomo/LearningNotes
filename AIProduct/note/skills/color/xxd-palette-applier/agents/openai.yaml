@@ -1,0 +1,4 @@
+interface:
+  display_name: "xxd-palette-applier"
+  short_description: "Place palette colors into real layouts and hierarchy"
+  default_prompt: "Use /xxd-palette-applier to decide where each color should be used in this design."

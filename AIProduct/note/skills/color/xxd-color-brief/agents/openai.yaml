@@ -1,0 +1,4 @@
+interface:
+  display_name: "xxd-color-brief"
+  short_description: "Turn vague art direction into concrete color constraints"
+  default_prompt: "Use /xxd-color-brief to turn this visual direction into a Chinese traditional color brief."
