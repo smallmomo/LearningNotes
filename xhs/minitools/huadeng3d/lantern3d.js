@@ -17,13 +17,13 @@
 
   // 与 SVG 版一致：widthAt(t) 返回 t∈[0,1] 处的半宽（竹骨弧度）。
   const SHAPES = {
-    round:  { height: 252, widthAt: (t) => 56 + 136 * Math.pow(Math.sin(Math.PI * t), .73) },
-    tall:   { height: 286, widthAt: (t) => 48 + 118 * Math.pow(Math.sin(Math.PI * t), .8) },
-    barrel: { height: 258, widthAt: (t) => 96 + 60 * Math.pow(Math.sin(Math.PI * t), .42) },
-    globe:  { height: 220, widthAt: (t) => 26 + 150 * Math.sin(Math.PI * t) },
-    oval:   { height: 314, widthAt: (t) => 40 + 104 * Math.pow(Math.sin(Math.PI * t), .95) },
-    melon:  { height: 246, widthAt: (t) => 50 + 140 * Math.pow(Math.sin(Math.PI * t), .85) },
-    hex:    { height: 250, widthAt: (t) => 60 + 74 * Math.sin(Math.PI * t), faceted: true, sides: 6 },
+    round:  { height: 282, widthAt: t => 38 + 110 * Math.pow(Math.sin(Math.PI * t), .62) },
+    tall:   { height: 340, widthAt: t => 40 + 82 * Math.pow(Math.sin(Math.PI * t), .64) },
+    barrel: { height: 270, widthAt: t => 96 + 20 * Math.pow(Math.sin(Math.PI * t), .65) },
+    globe:  { height: 290, widthAt: t => Math.sqrt(145 * 145 - Math.pow((t - .5) * 282, 2)) },
+    oval:   { height: 350, widthAt: t => 30 + 77 * Math.pow(Math.sin(Math.PI * t), .85) },
+    melon:  { height: 246, widthAt: t => 40 + 126 * Math.pow(Math.sin(Math.PI * t), .6) },
+    hex:    { height: 280, widthAt: t => 102 + 12 * Math.sin(Math.PI * t), faceted: true, sides: 6 },
     lotus:  { kind: 'lotus',  height: 230, widthAt: (t) => 70 + 150 * Math.pow(Math.sin(Math.PI * t), .6) },
     rabbit: { kind: 'rabbit', height: 230, widthAt: (t) => 60 + 130 * Math.pow(Math.sin(Math.PI * t), .7) }
   };
@@ -133,11 +133,17 @@
     x.fillStyle = p.paper;
     x.fillRect(0, 0, 512, 512);
     // Deterministic fibres keep paper tactile without flickering on selection.
-    for (let i = 0; i < 2800; i++) {
+    for (let i = 0; i < 1600; i++) {
       const xx = (i * 137.51) % 512, yy = (i * 73.37) % 512;
-      x.fillStyle = i % 2 ? 'rgba(255,248,225,.07)' : 'rgba(70,40,20,.035)';
+      x.fillStyle = i % 2 ? 'rgba(255,248,225,.035)' : 'rgba(70,40,20,.035)';
       x.fillRect(xx, yy, 1, 2 + i % 5);
     }
+    const wash = x.createLinearGradient(0, 0, 0, 512);
+    wash.addColorStop(0, 'rgba(65,27,18,.14)');
+    wash.addColorStop(.38, 'rgba(255,240,206,.08)');
+    wash.addColorStop(.65, 'rgba(255,240,206,.04)');
+    wash.addColorStop(1, 'rgba(65,27,18,.14)');
+    x.fillStyle = wash; x.fillRect(0, 0, 512, 512);
     x.strokeStyle = p.ink;
     x.fillStyle = p.ink;
     x.lineCap = 'round';
@@ -170,18 +176,16 @@
         x.fill();
       });
     } else if (pattern === 'cloud') {
-      x.lineWidth = 6;
-      for (let k = 0; k < 5; k++) {
-        const yy = 70 + k * 95;
-        x.beginPath();
-        for (let i = 0; i <= 44; i++) {
-          const xx = 30 + i * 10;
-          const y = yy + Math.sin(i * 0.5) * 22;
-          if (i === 0) x.moveTo(xx, y);
-          else x.lineTo(xx, y);
-        }
+      x.lineWidth = 2.5;
+      [[140,140],[345,250],[175,370]].forEach(([cx,cy]) => {
+        x.beginPath(); x.moveTo(cx-68,cy+18);
+        x.bezierCurveTo(cx-105,cy+18,cx-95,cy-18,cx-65,cy-12);
+        x.bezierCurveTo(cx-70,cy-57,cx-10,cy-65,cx+5,cy-28);
+        x.bezierCurveTo(cx+44,cy-53,cx+76,cy-8,cx+47,cy+8);
+        x.bezierCurveTo(cx+24,cy+24,cx-18,cy+1,cx-38,cy+18);
         x.stroke();
-      }
+        x.beginPath(); x.moveTo(cx-50,cy+32); x.quadraticCurveTo(cx+4,cy+19,cx+65,cy+32); x.stroke();
+      });
     }
     const tex = new THREE.CanvasTexture(c);
     if ('colorSpace' in tex) tex.colorSpace = THREE.SRGBColorSpace;
@@ -200,11 +204,12 @@
     }
     const seg = shape.faceted ? (shape.sides || 6) : 96;
     const geometry = new THREE.LatheGeometry(pts, seg);
-    if (shape === SHAPES.melon) {
+    if (!shape.faceted) {
       const pos = geometry.attributes.position;
       for (let i = 0; i < pos.count; i++) {
         const a = Math.atan2(pos.getX(i), pos.getZ(i));
-        const lobe = 1 + .09 * Math.cos(a * 10);
+        const t = pos.getY(i) / (shape.height * SCALE) + .5;
+        const lobe = shape === SHAPES.melon ? 1 + .09 * Math.cos(a * 10) : 1 - .012 * (1 - Math.cos(a * 16)) * Math.sin(Math.PI * t);
         pos.setXYZ(i, pos.getX(i) * lobe, pos.getY(i), pos.getZ(i) * lobe);
       }
       geometry.computeVertexNormals();
@@ -250,10 +255,10 @@
 
   // Curved, cupped petals: the same surface defines both paper and bamboo ribs.
   function petalPoint(t, u, layer) {
-    const width = Math.pow(Math.sin(Math.PI * t), .8) * layer.width;
+    const width = Math.pow(Math.sin(Math.PI * t), .56) * layer.width;
     return new THREE.Vector3(u * width,
-      layer.y + layer.height * Math.pow(t, 1.65) + .18 * u * u * Math.sin(Math.PI * t),
-      .18 + layer.reach * t - .25 * u * u * Math.sin(Math.PI * t));
+      layer.y + layer.height * (1 - Math.cos(t * Math.PI / 2)) - .2 * Math.pow(t, 7) + .28 * u * u * Math.sin(Math.PI * t),
+      .12 + layer.reach * Math.sin(t * Math.PI / 2) - .38 * u * u * Math.sin(Math.PI * t));
   }
 
   function buildLotus(p, lit, showMotif, pattern) {
@@ -261,20 +266,23 @@
     const mat = paperMaterial(p, lit, showMotif ? pattern : 'plain');
     const ribMat = new THREE.LineBasicMaterial({ color: 0xd5b370, transparent: true, opacity: .3 });
     [
-      { n: 10, width: .83, height: 1.45, reach: 2.5, y: -1.0 },
-      { n: 8, width: .68, height: 2.0, reach: 1.7, y: -.9 },
-      { n: 6, width: .51, height: 2.25, reach: .9, y: -.8 }
+      { n: 9, width: .95, height: 1.2, reach: 2.4, y: -1.0 },
+      { n: 7, width: .8, height: 1.8, reach: 1.65, y: -.9 },
+      { n: 5, width: .59, height: 2.0, reach: .86, y: -.8 }
     ].forEach((layer, index) => {
       for (let k = 0; k < layer.n; k++) {
         const petal = new THREE.Group();
         petal.rotation.y = k * Math.PI * 2 / layer.n + index * .36;
-        const positions = [], uv = [], indices = [];
+        const positions = [], uv = [], indices = [], colors = [];
         const rows = 24, cols = 12;
         for (let i = 0; i <= rows; i++) {
           for (let j = 0; j <= cols; j++) {
             const v = petalPoint(i / rows, j / cols * 2 - 1, layer);
             positions.push(v.x, v.y, v.z);
             uv.push(j / cols, i / rows);
+            const tint = new THREE.Color(0xfff4d8).lerp(new THREE.Color(0xffffff), Math.pow(i / rows, .7));
+            const shade = .87 + .13 * Math.sin(Math.PI * i / rows);
+            colors.push(tint.r * shade, tint.g * shade, tint.b * shade);
             if (i < rows && j < cols) {
               const a = i * (cols + 1) + j, b = a + cols + 1;
               indices.push(a, b, a + 1, b, b + 1, a + 1);
@@ -284,6 +292,8 @@
         const geo = new THREE.BufferGeometry();
         geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
         geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+        geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+        mat.vertexColors = true;
         geo.setIndex(indices); geo.computeVertexNormals();
         petal.add(new THREE.Mesh(geo, mat));
         [-1, 0, 1].forEach(u => {
@@ -303,29 +313,34 @@
     const g = new THREE.Group();
     const mat = paperMaterial(p, lit, 'plain');
     const bodyMat = paperMaterial(p, lit, showMotif ? pattern : 'plain');
-    const accent = new THREE.MeshStandardMaterial({ color: p.ink, roughness: .9 });
+    const accent = new THREE.MeshStandardMaterial({ color: 0xd9a09a, roughness: .9 });
     const dark = new THREE.MeshStandardMaterial({ color: 0x392b2a, roughness: .6 });
     function ellipsoid(scale, position, material, tilt = 0) {
       const mesh = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 24), material);
       mesh.scale.set(...scale); mesh.position.set(...position); mesh.rotation.z = tilt;
       g.add(mesh); return mesh;
     }
-    const belly = ellipsoid([1.22, 1.28, .95], [0, -.3, 0], bodyMat);
+    const belly = ellipsoid([1.05, 1.17, .85], [0, -.38, 0], bodyMat);
     // Place the drawing on the visible belly instead of the sphere's back seam.
     const pos = belly.geometry.attributes.position, uv = belly.geometry.attributes.uv;
     for (let i = 0; i < uv.count; i++) uv.setXY(i, pos.getX(i) * .5 + .5, pos.getY(i) * .5 + .5);
-    ellipsoid([.89, .82, .76], [0, 1.02, .42], mat);
+    ellipsoid([.99, .85, .8], [0, .98, .36], mat);
     [-1, 1].forEach(sign => {
-      ellipsoid([.29, 1.03, .24], [sign * .43, 2.34, .35], mat, -sign * .17);
-      const inner = ellipsoid([.15, .76, .065], [sign * .45, 2.39, .57], accent, -sign * .17);
+      ellipsoid([.29, sign < 0 ? .96 : 1.05, .22], [sign * .43, 2.25, .3], mat, sign < 0 ? .29 : -.12);
+      const inner = ellipsoid([.15, sign < 0 ? .68 : .78, .06], [sign * .45, 2.29, .5], accent, sign < 0 ? .29 : -.12);
       inner.userData.decoration = true;
-      ellipsoid([.47, .28, .65], [sign * .72, -1.38, .44], mat);
-      ellipsoid([.25, .55, .3], [sign * .94, -.36, .66], mat, sign * .25);
-      const eye = ellipsoid([.065, .085, .045], [sign * .32, 1.16, 1.12], dark);
+      ellipsoid([.38, .23, .55], [sign * .59, -1.4, .37], mat);
+      ellipsoid([.22, .39, .23], [sign * .76, -.38, .63], mat, sign * .32);
+      const eye = ellipsoid([.06, .08, .045], [sign * .36, 1.08, 1.105], dark);
       eye.userData.decoration = true;
     });
-    const nose = ellipsoid([.09, .06, .045], [0, .94, 1.2], accent);
+    const nose = ellipsoid([.065, .045, .045], [0, .88, 1.18], accent);
     nose.userData.decoration = true;
+    const mouthMat = new THREE.LineBasicMaterial({ color: 0x60453f });
+    const mouth = new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(-.11,.79,1.157),new THREE.Vector3(0,.82,1.17),new THREE.Vector3(.11,.79,1.157)
+    ]),mouthMat);
+    g.add(mouth);
     ellipsoid([.4, .4, .4], [0, -.7, -1.03], mat);
     return g;
   }
@@ -358,30 +373,41 @@
   }
 
   function buildTassel(colors, len) {
-    const g = new THREE.Group();
-    g.userData.swing = true;
-    const metalMat = new THREE.MeshStandardMaterial({ color: METAL, roughness: 0.4, metalness: 0.6 });
-    const knot = new THREE.Mesh(new THREE.SphereGeometry(0.14, 16, 16), metalMat);
-    g.add(knot);
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.05, 10, 20), metalMat);
-    ring.position.y = -0.05;
-    g.add(ring);
-    const lineMat = new THREE.LineBasicMaterial({ color: colors.dark });
-    const N = 30;
-    for (let i = 0; i < N; i++) {
-      const a = (i / N) * Math.PI * 2;
-      const spread = 0.17;
-      const top = new THREE.Vector3(Math.cos(a) * spread * .7, -0.18, Math.sin(a) * spread * .7);
-      const mid = new THREE.Vector3(Math.cos(a) * spread * 0.6, -len * 0.55, Math.sin(a) * spread * 0.6);
-      const end = new THREE.Vector3(Math.cos(a) * spread, -len + .06 * Math.sin(i * 2.4), Math.sin(a) * spread);
-      g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([top, mid, end]), lineMat));
+    const g = new THREE.Group(); g.userData.swing = true;
+    const silk = new THREE.MeshStandardMaterial({color:colors.dark,roughness:.75});
+    const gold = new THREE.MeshStandardMaterial({color:METAL,metalness:.45,roughness:.45});
+    const bead = new THREE.Mesh(new THREE.SphereGeometry(.13,20,16),silk);
+    bead.scale.y=1.3; bead.position.y=-.2; g.add(bead);
+    const cord = new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,.15,8),silk);
+    cord.position.y=-.055; g.add(cord);
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(.12,.18,.23,24),gold);
+    cap.position.y=-.48; g.add(cap);
+    const threads = [new THREE.LineBasicMaterial({color:colors.dark}),new THREE.LineBasicMaterial({color:colors.light})];
+    for(let i=0;i<72;i++) {
+      const angle=i/72*Math.PI*2;
+      const r=.15*(.65+.35*((i*17)%11)/10);
+      const points=[];
+      for(let k=0;k<=12;k++) {
+        const t=k/12;
+        points.push(new THREE.Vector3(Math.cos(angle)*r*(1+.14*t)+.035*Math.sin(t*Math.PI),-.59-t*(len-.59)+.035*t*Math.sin(i*2.4),Math.sin(angle)*r*(1+.14*t)));
+      }
+      const material = threads[i%4===0?1:0];
+      g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points),material));
     }
-    const tip = new THREE.Mesh(
-      new THREE.SphereGeometry(0.1, 12, 12),
-      new THREE.MeshStandardMaterial({ color: colors.light, roughness: 0.5 })
-    );
-    tip.position.y = -len;
-    g.add(tip);
+    return g;
+  }
+
+  function buildCollar(radius, y, top, shape, p) {
+    const g = new THREE.Group();
+    const segments = shape.faceted ? 6 : 64;
+    const lacquer = new THREE.MeshStandardMaterial({color:p.edge,roughness:.55,metalness:.1});
+    const brass = new THREE.MeshStandardMaterial({color:METAL,roughness:.5,metalness:.4});
+    const sleeve = new THREE.Mesh(new THREE.CylinderGeometry(radius*1.06,radius*1.06,.18,segments),lacquer);
+    sleeve.position.y=y+(top?.035:-.035); g.add(sleeve);
+    [-.075,.075].forEach(d => {
+      const trim = new THREE.Mesh(new THREE.CylinderGeometry(radius*1.075,radius*1.075,.018,segments),brass);
+      trim.position.y=sleeve.position.y+d; g.add(trim);
+    });
     return g;
   }
 
@@ -415,8 +441,8 @@
         ribs.traverse(o => { if (o.material) o.material.opacity = .22; });
         g.add(ribs);
       }
-      g.add(metalRing(shape.widthAt(0) * SCALE, top, metalMat));
-      g.add(metalRing(shape.widthAt(1) * SCALE, bottom, metalMat));
+      g.add(buildCollar(shape.widthAt(1) * SCALE, top, true, shape, p));
+      g.add(buildCollar(shape.widthAt(0) * SCALE, bottom, false, shape, p));
     }
     const topLoop = new THREE.Mesh(new THREE.TorusGeometry(.18, .035, 10, 24), metalMat);
     topLoop.position.y = top + .2;

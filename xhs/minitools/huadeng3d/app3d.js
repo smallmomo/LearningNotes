@@ -60,6 +60,21 @@
     $('previewCaption').textContent = completed ? selection.wish || '愿灯火可亲，所念皆如愿' : steps[step].subtitle;
   }
 
+  function frameIcon(frame) {
+    const silhouettes = {
+      round: '<path d="M23 10C6 17 6 45 23 52H37C54 45 54 17 37 10Z"/><path d="M26 10C17 22 17 41 26 52M34 10C43 22 43 41 34 52"/>',
+      tall: '<path d="M25 7C12 18 12 47 25 56H35C48 47 48 18 35 7Z"/><path d="M30 7V56"/>',
+      barrel: '<path d="M16 12Q10 31 16 51H44Q50 31 44 12Z"/><path d="M22 13V50M38 13V50"/>',
+      globe: '<circle cx="30" cy="31" r="21"/><ellipse cx="30" cy="31" rx="11" ry="21"/>',
+      oval: '<path d="M26 6C6 27 20 53 27 57H33C40 53 54 27 34 6Z"/><path d="M30 6V57"/>',
+      melon: '<ellipse cx="30" cy="32" rx="24" ry="18"/><ellipse cx="30" cy="32" rx="15" ry="18"/><ellipse cx="30" cy="32" rx="6" ry="18"/>',
+      hex: '<path d="M15 13L30 8 45 13 47 49 30 55 13 49Z"/><path d="M30 8V55M15 13H45M13 49H47"/>',
+      lotus: '<path d="M30 49Q5 45 6 29Q22 29 30 49Q55 45 54 29Q38 29 30 49Z"/><path d="M30 49Q10 28 18 18Q29 25 30 49Q50 28 42 18Q31 25 30 49Z"/><path d="M30 48Q16 29 30 12Q44 29 30 48Z"/>',
+      rabbit: '<ellipse cx="30" cy="43" rx="13" ry="14"/><ellipse cx="24" cy="14" rx="4" ry="12" transform="rotate(-12 24 14)"/><ellipse cx="37" cy="13" rx="4" ry="12" transform="rotate(8 37 13)"/><ellipse cx="30" cy="29" rx="13" ry="11"/><path d="M25 28h.1M35 28h.1" stroke-width="3"/>'
+    };
+    return `<svg viewBox="0 0 60 68" aria-hidden="true" fill="#d4b58622" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">${silhouettes[frame] || silhouettes.round}<path d="M30 57v7M27 64h6"/></svg>`;
+  }
+
   function renderStep() {
     const current = steps[step];
     $('steps').replaceChildren();
@@ -85,7 +100,10 @@
       button.setAttribute('aria-pressed', String(selection[current.key] === value));
       const preview = document.createElement('span');
       preview.className = 'sample';
-      if (sample.startsWith('#')) {
+      if (current.key === 'frame') {
+        preview.classList.add('frame-sample');
+        preview.innerHTML = frameIcon(value);
+      } else if (sample.startsWith('#')) {
         const swatch = document.createElement('span');
         swatch.className = 'swatch';
         swatch.style.backgroundColor = sample;
