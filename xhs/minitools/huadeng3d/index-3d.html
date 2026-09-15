@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>花灯手作 · 3D 立体版</title>
+    <link rel="stylesheet" href="style.css?v=20260915-light" />
+    <style>
+      #artwork3d { width: 100%; height: 100%; display: block; touch-action: pan-y; cursor: grab; }
+      #artwork3d:active { cursor: grabbing; }
+      .stage-hint {
+        position: absolute; bottom: 16px; left: 0; right: 0; text-align: center;
+        color: #8a9b8c; font-size: 11px; letter-spacing: 1px; z-index: 1; pointer-events: none;
+      }
+    </style>
+    <script defer src="three.min.js"></script>
+    <script defer src="lantern3d.js?v=20260915-light"></script>
+    <script defer src="app3d.js?v=20260915-light"></script>
+  </head>
+  <body>
+    <main class="studio">
+      <header class="header">
+        <a class="brand" href="../huadeng/index.html"><span class="seal">灯</span>花灯手作<small>一盏灯，一份心意 · 3D</small></a>
+        <button class="quiet" id="collectionButton">我的花灯 <span id="count">0</span></button>
+      </header>
+
+      <section class="workspace" id="workshop">
+        <div class="stage" id="stage">
+          <div class="stage-heading"><span>灯下 · 立体手作</span><span id="stageLabel">01 / 扎灯骨</span></div>
+          <div class="artwork" id="artwork"><canvas id="artwork3d"></canvas></div>
+          <div class="stage-hint">拖动旋转 · 滚轮缩放</div>
+          <div class="stage-caption"><h1 id="previewName">从一副竹骨开始</h1><p id="previewCaption">细竹弯成弧，把团圆的形状留住。</p></div>
+        </div>
+
+        <section class="workbench" aria-label="制作步骤">
+          <div class="intro"><span class="eyebrow">THE LANTERN ATELIER · 3D</span><h2>亲手做一盏团圆</h2><p>扎骨、糊纸、描花、系穗，最后点亮。</p></div>
+          <nav class="steps" id="steps" aria-label="制作进度"></nav>
+          <div class="step-content">
+            <div class="step-heading"><span id="stepNumber">第一道</span><h3 id="stepTitle">扎一副灯骨</h3></div>
+            <p class="step-description" id="stepDescription"></p>
+            <div class="options" id="options"></div>
+            <div class="wish-fields" id="wishFields" hidden>
+              <label for="lanternName">给它一个名字</label>
+              <input id="lanternName" maxlength="16" placeholder="例如：春风照晚归" />
+              <label for="blessing">把心愿写进灯里</label>
+              <input id="blessing" maxlength="32" placeholder="愿每一次出发，都有温暖相伴" />
+            </div>
+          </div>
+          <footer class="workbench-footer">
+            <button class="back" id="backButton">上一步</button>
+            <button class="primary" id="nextButton">糊上灯纸 <span>→</span></button>
+          </footer>
+          <div class="result-actions" id="resultActions" hidden>
+            <button class="primary" id="downloadButton">下载高清纪念图 ↓</button>
+            <p class="export-note">1600 × 2000 高清图片 · 含花灯、名字与心愿</p>
+            <button class="quiet" id="saveButton">收入收藏</button>
+            <button class="quiet" id="restartButton">再做一盏</button>
+          </div>
+        </section>
+      </section>
+
+      <section class="collection" id="collection" hidden>
+        <div class="collection-heading"><div><span class="eyebrow">MY LANTERNS</span><h2>灯火可亲</h2></div><button class="quiet" id="returnButton">返回手作 →</button></div>
+        <div class="collection-grid" id="collectionGrid"></div>
+      </section>
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </main>
+  </body>
+</html>
