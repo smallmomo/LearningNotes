@@ -507,6 +507,56 @@
     halo.scale.setScalar(radius * 4.1);
   }
 
+  function radialTexture(stops, size) {
+    size = size || 256;
+    const c = document.createElement('canvas');
+    c.width = c.height = size;
+    const ctx = c.getContext('2d');
+    const g = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+    stops.forEach(s => g.addColorStop(s[0], s[1]));
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, size, size);
+    const tex = new THREE.CanvasTexture(c);
+    if ('colorSpace' in tex) tex.colorSpace = THREE.SRGBColorSpace;
+    else if ('sRGBEncoding' in THREE) tex.encoding = THREE.sRGBEncoding;
+    return tex;
+  }
+
+  // 悬挂感的地面元素：一片柔和的落影。
+  function createGround() {
+    const shadow = new THREE.Mesh(
+      new THREE.CircleGeometry(1, 48),
+      new THREE.MeshBasicMaterial({ map: radialTexture([[0, 'rgba(4,10,12,.55)'], [.45, 'rgba(4,10,12,.3)'], [1, 'rgba(4,10,12,0)']]), transparent: true, depthWrite: false, opacity: .8 })
+    );
+    shadow.rotation.x = -Math.PI / 2;
+    const group = new THREE.Group();
+    group.add(shadow);
+    return group;
+  }
+
+  // 暖色光尘：细小的漂浮微粒，点亮后愈发清晰。
+  function createDust(count) {
+    const N = count || 110;
+    const positions = new Float32Array(N * 3);
+    const speeds = new Float32Array(N);
+    for (let i = 0; i < N; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const r = .8 + Math.random() * 3.4;
+      positions[i * 3] = Math.cos(a) * r;
+      positions[i * 3 + 1] = -3.2 + Math.random() * 7;
+      positions[i * 3 + 2] = Math.sin(a) * r;
+      speeds[i] = .06 + Math.random() * .16;
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const points = new THREE.Points(geo, new THREE.PointsMaterial({
+      color: 0xffd9a0, size: .05, transparent: true, opacity: .1,
+      depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true
+    }));
+    points.userData.speeds = speeds;
+    return points;
+  }
+
   function disposeObject(obj) {
     const geometries = new Set(), materials = new Set(), textures = new Set();
     obj.traverse(o => {
@@ -541,6 +591,10 @@
       this.scene.add(this.glow);
       this.halo = createHalo();
       this.scene.add(this.halo);
+      this.ground = createGround();
+      this.scene.add(this.ground);
+      this.dust = createDust();
+      this.scene.add(this.dust);
       this.lightLevel = 0;
       this.lightTarget = 0;
       this.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -583,6 +637,10 @@
         this._fitCamera();
         disposeObject(boundsModel);
       }
+      // 地面投影跟随灯体的实际大小与底端高度
+      const box = new THREE.Box3().setFromObject(this.lantern);
+      this.ground.position.y = box.min.y - .65;
+      this.ground.scale.setScalar(Math.max(2.4, (this.designRadius || 3) * 1.5));
       this.controls.apply(this.camera);
       const lit = stage >= 4;
       this.lightTarget = lit ? 1 : 0;
@@ -607,6 +665,7 @@
       this.dir.intensity = .65 - level * .3;
       this.glow.intensity = level * .9;
       this.halo.material.opacity = level;
+      this.dust.material.opacity = .1 + .26 * level;
       positionHalo(this.halo, this.camera, this.controls.target, this.designRadius || 3);
       if (this.lantern) this.lantern.traverse(o => {
         if (o.material && o.material.userData.paperGlow) o.material.emissiveIntensity = 1.65 * level;
@@ -619,8 +678,20 @@
       const poster = document.createElement('canvas');
       poster.width = width; poster.height = height;
       const ctx = poster.getContext('2d');
-      ctx.fillStyle = '#0b151c'; ctx.fillRect(0, 0, width, height);
-      const scene = new THREE.Scene(); scene.background = new THREE.Color(0x0b151c);
+      // 夜色渐层背景：上深下暗，中部微微透出一点暖意。
+      const bgCanvas = document.createElement('canvas');
+      bgCanvas.width = 16; bgCanvas.height = 512;
+      const bgCtx = bgCanvas.getContext('2d');
+      const bgGrad = bgCtx.createLinearGradient(0, 0, 0, 512);
+      bgGrad.addColorStop(0, '#0a141a');
+      bgGrad.addColorStop(.34, '#14232b');
+      bgGrad.addColorStop(.62, '#0e1a21');
+      bgGrad.addColorStop(1, '#060c10');
+      bgCtx.fillStyle = bgGrad; bgCtx.fillRect(0, 0, 16, 512);
+      const bgTex = new THREE.CanvasTexture(bgCanvas);
+      if ('colorSpace' in bgTex) bgTex.colorSpace = THREE.SRGBColorSpace;
+      else if ('sRGBEncoding' in THREE) bgTex.encoding = THREE.sRGBEncoding;
+      const scene = new THREE.Scene(); scene.background = bgTex;
       const model = buildLantern(design, 4); scene.add(model);
       const bounds = new THREE.Box3().setFromObject(model);
       const center = bounds.getCenter(new THREE.Vector3());
@@ -638,6 +709,11 @@
       scene.add(new THREE.HemisphereLight(0xfff4df, 0x637f7b, .28));
       const key = new THREE.DirectionalLight(0xfff0d8, .35); key.position.set(3, 5, 6); scene.add(key);
       const light = new THREE.PointLight(0xffd9a0, .9, 14); scene.add(light);
+      // 海报里同样铺上地面投影
+      const ground = createGround();
+      ground.position.y = bounds.min.y - .55;
+      ground.scale.setScalar(Math.max(2.4, radius * 1.4));
+      scene.add(ground);
       const halo = createHalo(); halo.material.opacity = 1;
       positionHalo(halo, camera, center, radius); scene.add(halo);
       const size = this.renderer.getSize(new THREE.Vector2());
@@ -650,20 +726,37 @@
       } finally {
         this.renderer.setPixelRatio(ratio);
         this.renderer.setSize(size.x, size.y, false);
+        bgTex.dispose();
         disposeObject(scene);
         this.renderer.render(this.scene, this.camera);
       }
-      ctx.strokeStyle = '#756345'; ctx.lineWidth = 2;
+      // 装裱：外框、内衬细线与四角记号
+      ctx.strokeStyle = 'rgba(162,136,84,.85)'; ctx.lineWidth = 2;
       ctx.strokeRect(48, 48, width - 96, height - 96);
-      ctx.strokeStyle = '#302e29'; ctx.strokeRect(62, 62, width - 124, height - 124);
+      ctx.strokeStyle = 'rgba(162,136,84,.3)'; ctx.lineWidth = 1;
+      ctx.strokeRect(62, 62, width - 124, height - 124);
+      ctx.strokeStyle = 'rgba(207,184,132,.9)'; ctx.lineWidth = 2;
+      [[34, 34, 1, 1], [width - 34, 34, -1, 1], [34, height - 34, 1, -1], [width - 34, height - 34, -1, -1]].forEach(([x, y, sx, sy]) => {
+        ctx.beginPath();
+        ctx.moveTo(x, y + sy * 20); ctx.lineTo(x, y); ctx.lineTo(x + sx * 20, y);
+        ctx.stroke();
+      });
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#c2a570'; ctx.font = '24px "Microsoft YaHei", sans-serif';
-      ctx.fillText('花 灯 手 作  ·  灯 火 可 亲', width / 2, 119);
-      const title = design.name || '一盏团圆';
-      let fontSize = 76;
-      do { ctx.font = `${fontSize}px "SimSun", serif`; fontSize -= 2; } while (ctx.measureText(title).width > 1280 && fontSize > 34);
+      // 顶部落款：一枚小印与品名
+      ctx.fillStyle = '#a25843';
+      ctx.fillRect(width / 2 - 25, 92, 50, 50);
+      ctx.strokeStyle = 'rgba(255,240,220,.4)'; ctx.lineWidth = 1;
+      ctx.strokeRect(width / 2 - 20, 97, 40, 40);
+      ctx.fillStyle = '#f8ecd8'; ctx.font = '32px "Songti SC","SimSun",serif';
+      ctx.fillText('灯', width / 2, 118);
+      ctx.fillStyle = '#c2a570'; ctx.font = '22px "PingFang SC","Microsoft YaHei",sans-serif';
+      ctx.fillText('花 灯 手 作 · 灯 火 可 亲', width / 2, 178);
+      // 灯名：字间拉开全角空隙，更显疏朗
+      const title = (design.name || '一盏团圆').split('').join('　');
+      let fontSize = 72;
+      do { ctx.font = `${fontSize}px "Songti SC","SimSun",serif`; fontSize -= 2; } while (ctx.measureText(title).width > 1280 && fontSize > 30);
       ctx.fillStyle = '#f6e4bf'; ctx.fillText(title, width / 2, 1610);
-      ctx.fillStyle = '#b8b3a4'; ctx.font = '32px "Microsoft YaHei", sans-serif';
+      ctx.fillStyle = '#cfc3a2'; ctx.font = '30px "PingFang SC","Microsoft YaHei",sans-serif';
       const wish = design.wish || '愿灯火可亲，所念皆如愿';
       const lines = []; let line = '';
       for (const char of wish) {
@@ -671,10 +764,18 @@
         line += char;
       }
       if (line) lines.push(line);
-      lines.forEach((text, i) => ctx.fillText(text, width / 2, 1720 + i * 52));
-      ctx.fillStyle = '#887954'; ctx.fillRect(width / 2 - 30, 1850, 60, 2);
-      ctx.font = '22px "Microsoft YaHei", sans-serif';
-      ctx.fillText('一 盏 灯  ·  一 份 心 意', width / 2, 1900);
+      lines.forEach((text, i) => ctx.fillText(text, width / 2, 1716 + i * 50));
+      // 分隔线中断处嵌一枚菱形记号
+      ctx.fillStyle = '#8d7c58';
+      ctx.fillRect(width / 2 - 34, 1848, 20, 2);
+      ctx.fillRect(width / 2 + 14, 1848, 20, 2);
+      ctx.save();
+      ctx.translate(width / 2, 1849);
+      ctx.rotate(Math.PI / 4);
+      ctx.fillRect(-4, -4, 8, 8);
+      ctx.restore();
+      ctx.fillStyle = '#9a8a64'; ctx.font = '22px "PingFang SC","Microsoft YaHei",sans-serif';
+      ctx.fillText('一 盏 灯 · 一 份 心 意', width / 2, 1902);
       return poster;
     }
 
@@ -691,6 +792,19 @@
         this.lantern.children.forEach((c) => {
           if (!this.reducedMotion && c.userData && c.userData.swing) c.rotation.z = Math.sin(t * 1.5) * 0.06;
         });
+      }
+      if (!this.reducedMotion) {
+        // 未拖拽时极缓慢地自转，让灯始终有一点呼吸感
+        if (!this.controls.dragging) this.controls.theta += delta * .07;
+        // 光尘缓缓上浮，飘出顶部后回到下方
+        const dust = this.dust.geometry.attributes.position;
+        const speeds = this.dust.userData.speeds;
+        for (let i = 0; i < dust.count; i++) {
+          let y = dust.getY(i) + speeds[i] * delta;
+          if (y > 4.2) y = -3.2;
+          dust.setY(i, y);
+        }
+        dust.needsUpdate = true;
       }
       this.controls.apply(this.camera);
       this._updateLight(delta);

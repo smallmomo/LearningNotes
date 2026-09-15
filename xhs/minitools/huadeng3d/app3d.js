@@ -93,6 +93,7 @@
     $('stepDescription').textContent = completed ? '保存一张带有花灯、名字与祝福的图片，把这份温暖留住。' : current.description;
     $('options').replaceChildren();
 
+    const optionButtons = [];
     (current.choices || []).forEach(([value, name, note, sample]) => {
       const button = document.createElement('button');
       button.className = 'option';
@@ -118,9 +119,17 @@
       detail.textContent = note;
       text.append(title, detail);
       button.append(preview, text);
+      optionButtons.push([button, value]);
+      // 只切换选中态，不重建整个面板，避免按钮整体刷新闪动
       button.onclick = () => {
+        if (selection[current.key] === value) return;
         selection[current.key] = value;
-        renderStep();
+        for (const [btn, val] of optionButtons) {
+          const selected = val === value;
+          btn.classList.toggle('selected', selected);
+          btn.setAttribute('aria-pressed', String(selected));
+        }
+        updateArt();
       };
       $('options').append(button);
     });
@@ -130,6 +139,11 @@
     $('nextButton').textContent = `${current.next}  →`;
     document.querySelector('.workbench-footer').hidden = completed;
     $('resultActions').hidden = !completed;
+    // 重放步骤内容的进场动画
+    const content = document.querySelector('.step-content');
+    content.classList.remove('enter');
+    void content.offsetWidth;
+    content.classList.add('enter');
     updateArt();
   }
 
