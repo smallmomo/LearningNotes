@@ -262,15 +262,22 @@
   }
 
   $('backButton').onclick = () => goToStep(Math.max(0, step - 1));
-  // 点击画布（非拖拽）切换灯体自转；提示文字跟随状态变化
+  // 点击画布（非拖拽）切换灯体自转；提示文字跟随状态与设备变化
   let downX = 0, downY = 0;
   const hint = $('stageHint');
+  const coarse = window.matchMedia('(pointer: coarse)');
+  const hintText = (running) => {
+    const zoom = coarse.matches ? '双指缩放' : '滚轮缩放';
+    return `拖动旋转 · ${zoom} · 点击${running ? '暂停转动' : '继续转动'}`;
+  };
+  hint.textContent = hintText(true);
+  coarse.addEventListener?.('change', () => { hint.textContent = hintText(studio.motionOn); });
   $('artwork3d').addEventListener('pointerdown', (e) => { downX = e.clientX; downY = e.clientY; });
   $('artwork3d').addEventListener('pointerup', (e) => {
     // 移动超过 5px 视为拖拽旋转，不触发切换
     if (Math.hypot(e.clientX - downX, e.clientY - downY) > 5) return;
     const on = studio.toggleMotion();
-    hint.textContent = on ? '拖动旋转 · 滚轮缩放 · 点击暂停' : '拖动旋转 · 滚轮缩放 · 点击继续';
+    hint.textContent = hintText(on);
   });
   $('nextButton').onclick = () => {
     if (step < 4) return goToStep(step + 1);

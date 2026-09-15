@@ -48,16 +48,45 @@
       this.dragging = false;
       this.px = 0;
       this.py = 0;
+      // 多点触控：记录每个触点位置，双指捏合缩放
+      this.pointers = new Map();
+      this.pinchDist = 0;
       dom.style.touchAction = 'none';
       dom.addEventListener('pointerdown', (e) => {
+        this.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
         this.dragging = true;
         this.px = e.clientX;
         this.py = e.clientY;
         if (dom.setPointerCapture) dom.setPointerCapture(e.pointerId);
+        // 第二根手指落下时记下当前两指间距，作为捏合基准
+        if (this.pointers.size === 2) this.pinchDist = this._twoFingerDist();
       });
-      dom.addEventListener('pointerup', () => { this.dragging = false; });
-      dom.addEventListener('pointercancel', () => { this.dragging = false; });
+      dom.addEventListener('pointerup', (e) => {
+        this.pointers.delete(e.pointerId);
+        if (this.pointers.size === 0) this.dragging = false;
+        else if (this.pointers.size === 1) {
+          // 剩下一根手指：回到单指旋转，重置该指基准
+          const rest = this.pointers.values().next().value;
+          this.px = rest.x; this.py = rest.y;
+        }
+      });
+      dom.addEventListener('pointercancel', (e) => {
+        this.pointers.delete(e.pointerId);
+        if (this.pointers.size === 0) this.dragging = false;
+      });
       dom.addEventListener('pointermove', (e) => {
+        if (!this.pointers.has(e.pointerId)) return;
+        this.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        // 双指捏合：按两指间距比例调整相机距离
+        if (this.pointers.size === 2) {
+          const dist = this._twoFingerDist();
+          if (this.pinchDist > 0 && dist > 0) {
+            this.radius *= this.pinchDist / dist;
+            this.radius = Math.max(this.minR, Math.min(this.maxR, this.radius));
+          }
+          this.pinchDist = dist;
+          return;
+        }
         if (!this.dragging) return;
         const dx = e.clientX - this.px;
         const dy = e.clientY - this.py;
@@ -72,6 +101,10 @@
         this.radius *= (1 + e.deltaY * 0.001);
         this.radius = Math.max(this.minR, Math.min(this.maxR, this.radius));
       }, { passive: false });
+    }
+    _twoFingerDist() {
+      const [a, b] = this.pointers.values();
+      return Math.hypot(a.x - b.x, a.y - b.y);
     }
     apply(camera) {
       const r = this.radius;
