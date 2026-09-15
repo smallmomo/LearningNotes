@@ -598,6 +598,7 @@
       this.lightLevel = 0;
       this.lightTarget = 0;
       this.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      this.motionOn = true; // 自转、摆动与光尘的总开关
       this.lantern = null;
       this.clock = new THREE.Clock();
       this._resize();
@@ -787,13 +788,14 @@
       requestAnimationFrame(() => this._animate());
       const delta = Math.min(this.clock.getDelta(), .1);
       const t = this.clock.elapsedTime;
+      const motion = !this.reducedMotion && this.motionOn;
       if (this.lantern) {
         // Keep the chosen view steady while changing paper, motifs or exporting.
         this.lantern.children.forEach((c) => {
-          if (!this.reducedMotion && c.userData && c.userData.swing) c.rotation.z = Math.sin(t * 1.5) * 0.06;
+          if (motion && c.userData && c.userData.swing) c.rotation.z = Math.sin(t * 1.5) * 0.06;
         });
       }
-      if (!this.reducedMotion) {
+      if (motion) {
         // 未拖拽时极缓慢地自转，让灯始终有一点呼吸感
         if (!this.controls.dragging) this.controls.theta += delta * .07;
         // 光尘缓缓上浮，飘出顶部后回到下方
@@ -809,6 +811,12 @@
       this.controls.apply(this.camera);
       this._updateLight(delta);
       this.renderer.render(this.scene, this.camera);
+    }
+
+    // 停止 / 恢复灯的自转、摆动与光尘漂浮；返回当前是否处于运动状态
+    toggleMotion() {
+      this.motionOn = !this.motionOn;
+      return this.motionOn;
     }
 
     _disposeGroup(obj) {
