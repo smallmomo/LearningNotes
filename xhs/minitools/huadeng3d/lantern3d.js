@@ -12,7 +12,12 @@
     vermilion: { edge: '#571d17', mid: '#b84926', lit: '#ffc174', paper: '#b65535', ink: '#ffe1a0' },
     ivory:     { edge: '#726041', mid: '#c9ae77', lit: '#fff3c3', paper: '#dcca9e', ink: '#825a35' },
     jade:      { edge: '#183d37', mid: '#497566', lit: '#d2d697', paper: '#648976', ink: '#eee0a6' },
-    rose:      { edge: '#55282b', mid: '#ac6764', lit: '#ffd4a0', paper: '#bd8684', ink: '#ffdda0' }
+    rose:      { edge: '#55282b', mid: '#ac6764', lit: '#ffd4a0', paper: '#bd8684', ink: '#ffdda0' },
+    // 新增：符合传统花灯的纸色
+    amber:     { edge: '#6b4413', mid: '#c98f2e', lit: '#ffe9a8', paper: '#d99a3d', ink: '#7a4a1e' }, // 明黄
+    coral:     { edge: '#8a2f24', mid: '#d4604a', lit: '#ffc9a3', paper: '#c96a4a', ink: '#ffe4c4' }, // 橘红
+    indigo:    { edge: '#1b2a4a', mid: '#3c5580', lit: '#c9d8f2', paper: '#41598a', ink: '#dfe8f8' }, // 靛蓝
+    lilac:     { edge: '#4a3159', mid: '#8b6aa0', lit: '#f0defc', paper: '#9679ab', ink: '#f4e8fd' }  // 青莲
   };
 
   // 与 SVG 版一致：widthAt(t) 返回 t∈[0,1] 处的半宽（竹骨弧度）。
@@ -219,6 +224,143 @@
         x.stroke();
         x.beginPath(); x.moveTo(cx-50,cy+32); x.quadraticCurveTo(cx+4,cy+19,cx+65,cy+32); x.stroke();
       });
+    } else if (pattern === 'bamboo') {
+      // 竹报平安：构图紧凑，一主一辅两竿，叶组聚于中段
+      const stalk = (bx, lean, topY, w, alpha) => {
+        x.globalAlpha = alpha;
+        let prevX = bx, prevY = 512;
+        for (let i = 1; i <= 5; i++) {
+          const frac = i / 5;
+          const ny = 512 - (512 - topY) * frac;
+          const nx = bx + lean * (512 - ny) * .1;
+          x.lineWidth = w * (1 - frac * .3);
+          x.beginPath(); x.moveTo(prevX, prevY); x.lineTo(nx, ny); x.stroke();
+          x.lineWidth = w * (1 - frac * .3) * .55;
+          x.beginPath(); x.moveTo(nx - w * .55, ny); x.lineTo(nx + w * .55, ny - 2); x.stroke();
+          prevX = nx; prevY = ny;
+        }
+      };
+      stalk(190, -.5, 90, 10, 1);   // 主竿，近浓
+      stalk(300, .4, 170, 7, .7);   // 辅竿，远淡
+      // 叶组集中在两竿之间的中段，形成视觉中心
+      const leaf = (lx, ly, ang, len, alpha) => {
+        x.globalAlpha = alpha; x.lineWidth = 3;
+        x.beginPath(); x.moveTo(lx, ly);
+        x.quadraticCurveTo(lx + Math.cos(ang) * len * .5, ly + Math.sin(ang) * len * .5 - 3,
+                           lx + Math.cos(ang) * len, ly + Math.sin(ang) * len);
+        x.stroke();
+      };
+      const cluster = (lx, ly, dir, alpha) => {
+        leaf(lx, ly, dir - .55, 40, alpha);
+        leaf(lx, ly, dir - .1, 50, alpha * .9);
+        leaf(lx, ly, dir + .35, 42, alpha * .75);
+      };
+      cluster(178, 220, -2.4, 1);    // 主竿上部，左向
+      cluster(210, 170, -.5, .95);   // 主竿顶部，右向
+      cluster(255, 260, -.8, .9);    // 两竿之间
+      cluster(315, 250, -2.2, .8);   // 辅竿上
+      cluster(290, 340, 2.6, .7);    // 辅竿下段，右向
+      x.globalAlpha = 1;
+    } else if (pattern === 'orchid') {
+      // 幽兰吐芳：一丛兰叶从右下角放射，花只一朵为主
+      const blade = (x0, y0, cx, cy, x1, y1, w, alpha) => {
+        x.globalAlpha = alpha; x.lineWidth = w;
+        x.beginPath(); x.moveTo(x0, y0);
+        x.quadraticCurveTo(cx, cy, x1, y1);
+        x.stroke();
+      };
+      // 根部聚在右下一点，叶向左上放射——书法撇法
+      blade(390, 440, 300, 330, 180, 300, 7, 1);      // 主叶，最浓最长
+      blade(392, 445, 330, 400, 240, 470, 5, .85);    // 披叶，先垂后撇
+      blade(388, 442, 280, 380, 150, 430, 4.5, .7);   // 垂叶
+      blade(394, 448, 360, 300, 330, 200, 4, .8);     // 直立短叶
+      blade(390, 443, 260, 280, 110, 210, 3.5, .55);  // 远淡长叶
+      // 一朵主花缀在叶腰，含三点花芯
+      x.globalAlpha = 1; x.lineWidth = 2.4;
+      const fx = 235, fy = 330;
+      for (let i = 0; i < 5; i++) {
+        const a = -.5 + (i / 5) * Math.PI * 2;
+        x.beginPath(); x.moveTo(fx, fy);
+        x.quadraticCurveTo(fx + Math.cos(a - .4) * 34, fy + Math.sin(a - .4) * 34,
+                           fx + Math.cos(a) * 30, fy + Math.sin(a) * 30);
+        x.quadraticCurveTo(fx + Math.cos(a + .4) * 34, fy + Math.sin(a + .4) * 34, fx, fy);
+        x.stroke();
+      }
+      x.beginPath(); x.arc(fx, fy, 5, 0, Math.PI * 2); x.fill();
+      x.globalAlpha = 1;
+    } else if (pattern === 'fish') {
+      // 年年有余：一主一辅双鱼，同向而游，构图聚于中带
+      const fish = (cx, cy, s, flip, alpha) => {
+        x.save(); x.translate(cx, cy); x.scale(flip ? -s : s, s);
+        x.globalAlpha = alpha;
+        x.lineWidth = 3.5;
+        // 鱼身一笔梭形
+        x.beginPath(); x.moveTo(-75, 0);
+        x.bezierCurveTo(-45, -36, 30, -38, 70, -6);
+        x.bezierCurveTo(30, 38, -45, 36, -75, 0);
+        x.closePath(); x.stroke();
+        // 鱼尾两笔
+        x.lineWidth = 2.5;
+        x.beginPath(); x.moveTo(66, 0); x.quadraticCurveTo(98, -20, 116, -30); x.stroke();
+        x.beginPath(); x.moveTo(66, 0); x.quadraticCurveTo(98, 20, 114, 32); x.stroke();
+        // 背鳍一笔，胸鳍一笔
+        x.beginPath(); x.moveTo(-20, -30); x.quadraticCurveTo(0, -52, 26, -36); x.stroke();
+        x.lineWidth = 2;
+        x.beginPath(); x.moveTo(-34, 22); x.quadraticCurveTo(-22, 44, -2, 30); x.stroke();
+        // 鳞片四列，弧口朝尾
+        x.lineWidth = 1.3;
+        for (let row = 0; row < 2; row++) {
+          for (let col = 0; col < 4; col++) {
+            x.beginPath();
+            x.arc(-44 + col * 24, -10 + row * 22, 9, Math.PI * .1, Math.PI * .9);
+            x.stroke();
+          }
+        }
+        // 眼
+        x.beginPath(); x.arc(-62, -8, 4, 0, Math.PI * 2); x.fill();
+        x.restore();
+      };
+      fish(200, 230, 1.3, false, 1);      // 主鱼，向右
+      fish(340, 330, .95, false, .75);    // 辅鱼，同向小而淡
+      // 底部一丛水草，三叶向右倒——有水流感
+      x.lineWidth = 2.2;
+      [[120, 470], [200, 485], [280, 480]].forEach(([bx, by], i) => {
+        x.globalAlpha = .55 + i * .1;
+        x.beginPath(); x.moveTo(bx, by);
+        x.quadraticCurveTo(bx + 20, by - 60, bx + 60 + i * 10, by - 110 - i * 12);
+        x.stroke();
+      });
+      x.globalAlpha = 1;
+    } else if (pattern === 'willow') {
+      // 雪柳依依：一株垂柳占左上，丝绦垂满，右下留白配雪点
+      // 主干从左上角斜入
+      x.lineWidth = 7;
+      x.beginPath(); x.moveTo(20, 70); x.quadraticCurveTo(120, 80, 200, 180); x.stroke();
+      x.lineWidth = 3;
+      x.beginPath(); x.moveTo(55, 78); x.quadraticCurveTo(140, 120, 195, 185); x.stroke();
+      // 树冠横枝一笔
+      x.lineWidth = 2.2;
+      x.beginPath(); x.moveTo(150, 130); x.quadraticCurveTo(280, 120, 380, 175); x.stroke();
+      x.beginPath(); x.moveTo(120, 150); x.quadraticCurveTo(200, 165, 300, 215); x.stroke();
+      // 垂丝从枝上等距垂下，长短渐变（中长边短），尾端同向轻摆
+      for (let i = 0; i < 9; i++) {
+        const sx = 155 + i * 26;
+        const sy = 132 + i * 8;
+        const len = 210 * Math.sin(Math.PI * (.15 + i / 9 * .7)) + 60;
+        x.globalAlpha = .3 + .5 * Math.sin(Math.PI * (.2 + i / 9 * .6));
+        x.lineWidth = 1.7;
+        x.beginPath(); x.moveTo(sx, sy);
+        x.bezierCurveTo(sx + 12, sy + len * .45, sx + 2, sy + len * .75, sx + 26, sy + len);
+        x.stroke();
+      }
+      // 右下留白处几点雪，聚散分明
+      [[350, 300, 5, .9], [410, 350, 4, .7], [330, 380, 3.5, .8], [430, 430, 4.5, .6], [370, 440, 3, .55]].forEach(([cx, cy, r, a]) => {
+        x.globalAlpha = a * .25;
+        x.beginPath(); x.arc(cx, cy, r * 2, 0, Math.PI * 2); x.fill();
+        x.globalAlpha = a;
+        x.beginPath(); x.arc(cx, cy, r, 0, Math.PI * 2); x.fill();
+      });
+      x.globalAlpha = 1;
     }
     const tex = new THREE.CanvasTexture(c);
     if ('colorSpace' in tex) tex.colorSpace = THREE.SRGBColorSpace;
