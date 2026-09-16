@@ -187,14 +187,16 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outlin
 
 /* ---------- 移动端（小红书内为主场景） ---------- */
 @media (max-width: 760px) {
-  .studio { padding: 0; }
+  /* 一屏式布局：整页不滚，唯一滚动在选项框里 */
+  html, body { height: 100%; overflow: hidden; }
+  .studio { padding: 0; height: 100%; display: flex; flex-direction: column; }
   body::before { display: none; }
-  .header { height: 58px; padding: 0 18px; }
+  .header { height: 58px; padding: 0 18px; flex: 0 0 auto; }
   .brand { font-size: 18px; letter-spacing: 2px; gap: 8px; }
   .brand small { display: none; }
   .seal { font-size: 15px; min-width: 26px; padding: 2px 4px; }
-  .workspace { display: flex; flex-direction: column; border: 0; box-shadow: none; min-height: 0; background: transparent; }
-  .stage { height: 40svh; min-height: 260px; max-height: 380px; }
+  .workspace { display: flex; flex-direction: column; border: 0; box-shadow: none; min-height: 0; flex: 1; background: transparent; }
+  .stage { flex: 0 0 34svh; min-height: 220px; max-height: 360px; }
   .stage-heading { top: 18px; left: 24px; right: 24px; font-size: 9px; }
   .artwork { height: calc(100% - 42px); margin: 0; }
   .stage-caption { margin: -8px 16px 12px; }
@@ -202,31 +204,42 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outlin
   .stage-caption p { display: none; }
   .stage::after { inset: 12px; }
   .stage::before { inset: 6px; }
-  .workbench { padding: 0 22px; background: transparent; }
+  .workbench { padding: 0 22px 14px; background: transparent; flex: 1; display: flex; flex-direction: column; min-height: 0; }
   .intro { display: none; }
-  .steps { margin: 17px 0 19px; }
+  .steps { margin: 14px 0 16px; flex: 0 0 auto; }
   .steps button { padding-bottom: 12px; font-size: 14px; }
   .step-heading h3 { font-size: 20px; }
   .step-description { font-size: 11px; min-height: 0; margin: 8px 0 12px; }
+  .step-content { flex: 1; display: flex; flex-direction: column; min-height: 0; }
   .option { min-height: 56px; padding: 10px; gap: 10px; }
-  .options { gap: 8px; max-height: 260px; }
-  /* 操作区吸底，避开 Home 指示条 */
+  /* 选项框吃掉剩余全部高度：只有它内部滚动；
+     第 4/5 步选项少或无选项时按内容收缩，不占满 */
+  .options { gap: 8px; max-height: none; flex: 1 1 auto; min-height: 0; }
+  .options:not(:has(.option)) { flex: 0 0 auto; }
+  .wish-fields { flex: 1; }
+  /* 操作区固定在工作台底部，不再吸底 */
   .workbench-footer {
-    position: sticky; bottom: 0; z-index: 3; margin: 18px -22px 0;
+    flex: 0 0 auto; margin: 14px -22px 0;
     padding: 12px 22px calc(12px + env(safe-area-inset-bottom));
-    background: rgba(246, 242, 232, .92);
+    background: rgba(246, 242, 232, .95);
     -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
     border-top: 1px solid var(--line);
   }
+  /* 「下一步」不再通栏，宽度贴合文字，与前几步一致 */
+  .workbench-footer .primary { flex: 0 0 auto; margin-left: auto; }
   .result-actions {
-    position: sticky; bottom: 0; z-index: 3; margin: 16px -22px 0;
+    flex: 0 0 auto; margin: 14px -22px 0;
     padding: 12px 22px calc(12px + env(safe-area-inset-bottom));
-    background: rgba(246, 242, 232, .92);
+    background: rgba(246, 242, 232, .95);
     -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
     border-top: 1px solid var(--line);
   }
-  .primary { min-height: 44px; }
+  /* 点灯后的按钮不再通栏，宽度贴合内容 */
+  .result-actions .primary { width: auto; margin-bottom: 0; }
+  .result-actions .quiet { flex: 1; }
+  .primary { min-height: 44px; white-space: nowrap; }
   .wish-fields label { margin-top: 6px; }
+  .wish-fields { overflow-y: auto; }
   .collection { padding: 20px; }
   .collection-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 }
