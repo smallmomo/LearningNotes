@@ -1210,7 +1210,7 @@
       this._qualityDropped = false;
       this._frameCost = 16;
       try {
-        this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+        this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true, powerPreference: 'high-performance' });
         this.renderer.setPixelRatio(this._clampedPixelRatio());
         if ('outputColorSpace' in this.renderer) this.renderer.outputColorSpace = THREE.SRGBColorSpace;
         else if ('outputEncoding' in this.renderer) this.renderer.outputEncoding = THREE.sRGBEncoding;
@@ -1254,7 +1254,7 @@
     }
 
     _clampedPixelRatio() {
-      return Math.min(window.devicePixelRatio || 1, 1.5);
+      return Math.min(window.devicePixelRatio || 1, 2.25);
     }
 
     _showFallback() {
@@ -1285,6 +1285,7 @@
       this.frame = selection.frame;
       this.lantern = buildLantern(selection, stage);
       this.lantern.position.y = 0.2;
+      this._sharpenTextures(this.lantern);
       this.scene.add(this.lantern);
       if (changedShape) {
         const boundsModel = buildLantern(selection, 4);
@@ -1329,6 +1330,21 @@
       positionHalo(this.halo, this.camera, this.controls.target, this.designRadius || 3);
       if (this.lantern) this.lantern.traverse(o => {
         if (o.material && o.material.userData.paperGlow) o.material.emissiveIntensity = 1.65 * level;
+      });
+    }
+
+    _sharpenTextures(obj) {
+      if (!this.renderer || !this.renderer.capabilities) return;
+      const max = this.renderer.capabilities.getMaxAnisotropy ? this.renderer.capabilities.getMaxAnisotropy() : 1;
+      const anisotropy = Math.min(4, max);
+      if (anisotropy <= 1) return;
+      obj.traverse((node) => {
+        const materials = node.material ? (Array.isArray(node.material) ? node.material : [node.material]) : [];
+        materials.forEach((mat) => {
+          if (!mat.map) return;
+          mat.map.anisotropy = anisotropy;
+          mat.map.needsUpdate = true;
+        });
       });
     }
 
@@ -1467,11 +1483,11 @@
       requestAnimationFrame(() => this._animate());
       if (!this.renderer || this._paused || document.hidden) { this.clock.getDelta(); return; }
       const delta = Math.min(this.clock.getDelta(), .1);
-      // 运行时持续掉帧时一次性把像素比降到 1，保证低端机可交互。
+      // 运行时持续掉帧时降低一点像素比，保留基本清晰度同时保证低端机可交互。
       this._frameCost += (Math.max(delta * 1000, 0) - this._frameCost) * .04;
       if (!this._qualityDropped && this._frameCost > 52) {
         this._qualityDropped = true;
-        this.renderer.setPixelRatio(1);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
         this._resize();
       }
       const t = this.clock.elapsedTime;
