@@ -193,7 +193,8 @@ button:focus, button:focus-visible, a:focus, a:focus-visible { outline: 2px soli
 @media (max-width: 760px) {
   /* 一屏式布局：整页不滚，唯一滚动在选项框里 */
   html, body { height: 100%; overflow: hidden; }
-  .studio { padding: 0; height: 100%; height: 100dvh; display: flex; flex-direction: column; }
+  /* 顶部固定留白 + 安全区：真机容器里 env() 常为 0，固定留白保证「花灯手作」不贴顶 */
+  .studio { padding: calc(14px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px))) 0 0; height: 100%; height: 100dvh; display: flex; flex-direction: column; }
   body::before { display: none; }
   .header { height: 58px; padding: 0 18px; flex: 0 0 auto; }
   .brand { font-size: 18px; letter-spacing: 2px; gap: 8px; }
@@ -217,11 +218,21 @@ button:focus, button:focus-visible, a:focus, a:focus-visible { outline: 2px soli
   .step-heading h3 { font-size: 20px; }
   .step-description { font-size: 11px; min-height: 0; margin: 8px 0 12px; }
   .step-content { flex: 1; display: flex; flex-direction: column; min-height: 0; }
-  .option { min-height: 62px; padding: 9px 22px 9px 10px; gap: 8px; }
-  /* 选项框吃掉剩余全部高度：只有它内部滚动；
-     第 4/5 步选项少或无选项时按内容收缩，不占满 */
-  .options { gap: 8px; max-height: none; flex: 1 1 auto; min-height: 0; }
-  .options.empty { flex: 0 0 auto; }
+  /* 选项行去框：未选时安静透明，选中态自己「发光」——状态在选项上，不在容器上 */
+  .option { min-height: 62px; padding: 9px 22px 9px 10px; gap: 8px; border-color: transparent; background: transparent; box-shadow: none; }
+  .option:hover { background: rgba(255, 252, 244, .5); border-color: transparent; }
+  .option.selected { border-color: var(--accent); background: var(--accent-wash); box-shadow: inset 0 0 0 1px rgba(145, 84, 62, .12); }
+  /* 滚动区：与卡纸同色的实底隔开上下静态内容（无框线，不显“框”），渐隐边缘提示可滚动 */
+  .options {
+    gap: 6px; max-height: none; flex: 1 1 auto; min-height: 0;
+    padding: 6px; margin: 0;
+    background: var(--card);
+    border-radius: 8px;
+    box-shadow: 0 0 0 1px var(--line);
+    -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
+    mask-image: linear-gradient(180deg, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
+  }
+  .options.empty { flex: 0 0 auto; background: none; box-shadow: none; -webkit-mask-image: none; mask-image: none; padding: 0; }
   .wish-fields { flex: 1; }
   /* 操作区固定在工作台底部，不再吸底 */
   .workbench-footer {
