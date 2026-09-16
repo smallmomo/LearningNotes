@@ -1118,18 +1118,27 @@
     return g;
   }
 
-  function createHalo() {
+  function createHalo(size) {
+    size = size || 512;
     const canvas = document.createElement('canvas');
-    canvas.width = canvas.height = 256;
+    canvas.width = canvas.height = size;
     const ctx = canvas.getContext('2d');
-    const gradient = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
-    gradient.addColorStop(0, 'rgba(255,194,105,.32)');
-    gradient.addColorStop(.3, 'rgba(255,167,74,.16)');
-    gradient.addColorStop(.65, 'rgba(240,140,50,.05)');
+    const half = size / 2;
+    const gradient = ctx.createRadialGradient(half, half, 0, half, half, half);
+    gradient.addColorStop(0, 'rgba(255,218,142,.38)');
+    gradient.addColorStop(.18, 'rgba(255,188,92,.2)');
+    gradient.addColorStop(.56, 'rgba(240,140,50,.06)');
     gradient.addColorStop(1, 'rgba(240,140,50,0)');
-    ctx.fillStyle = gradient; ctx.fillRect(0, 0, 256, 256);
+    ctx.fillStyle = gradient; ctx.fillRect(0, 0, size, size);
+    const core = ctx.createRadialGradient(half, half, 0, half, half, size * .18);
+    core.addColorStop(0, 'rgba(255,238,190,.26)');
+    core.addColorStop(1, 'rgba(255,238,190,0)');
+    ctx.fillStyle = core; ctx.fillRect(0, 0, size, size);
+    const texture = new THREE.CanvasTexture(canvas);
+    if ('colorSpace' in texture) texture.colorSpace = THREE.SRGBColorSpace;
+    else if ('sRGBEncoding' in THREE) texture.encoding = THREE.sRGBEncoding;
     const halo = new THREE.Sprite(new THREE.SpriteMaterial({
-      map: new THREE.CanvasTexture(canvas), transparent: true, depthWrite: false,
+      map: texture, transparent: true, depthWrite: false,
       blending: THREE.AdditiveBlending, opacity: 0
     }));
     halo.renderOrder = -1;
@@ -1374,21 +1383,29 @@
       const poster = document.createElement('canvas');
       poster.width = width; poster.height = height;
       const ctx = poster.getContext('2d');
-      // 夜色渐层背景：上深下暗，中部微微透出一点暖意。
+      // 夜色渐层背景：中部保留暖光，避免导出图一片黑沉。
       const bgCanvas = document.createElement('canvas');
-      bgCanvas.width = 16; bgCanvas.height = 512;
+      bgCanvas.width = 64; bgCanvas.height = 1024;
       const bgCtx = bgCanvas.getContext('2d');
-      const bgGrad = bgCtx.createLinearGradient(0, 0, 0, 512);
-      bgGrad.addColorStop(0, '#0a141a');
-      bgGrad.addColorStop(.34, '#14232b');
-      bgGrad.addColorStop(.62, '#0e1a21');
-      bgGrad.addColorStop(1, '#060c10');
-      bgCtx.fillStyle = bgGrad; bgCtx.fillRect(0, 0, 16, 512);
+      const bgGrad = bgCtx.createLinearGradient(0, 0, 0, 1024);
+      bgGrad.addColorStop(0, '#071116');
+      bgGrad.addColorStop(.22, '#11272a');
+      bgGrad.addColorStop(.5, '#1a312f');
+      bgGrad.addColorStop(.76, '#101e22');
+      bgGrad.addColorStop(1, '#05090d');
+      bgCtx.fillStyle = bgGrad; bgCtx.fillRect(0, 0, 64, 1024);
+      const warm = bgCtx.createRadialGradient(32, 430, 0, 32, 430, 440);
+      warm.addColorStop(0, 'rgba(176,103,61,.24)');
+      warm.addColorStop(.42, 'rgba(176,103,61,.08)');
+      warm.addColorStop(1, 'rgba(176,103,61,0)');
+      bgCtx.fillStyle = warm; bgCtx.fillRect(0, 0, 64, 1024);
       const bgTex = new THREE.CanvasTexture(bgCanvas);
       if ('colorSpace' in bgTex) bgTex.colorSpace = THREE.SRGBColorSpace;
       else if ('sRGBEncoding' in THREE) bgTex.encoding = THREE.sRGBEncoding;
       const scene = new THREE.Scene(); scene.background = bgTex;
-      const model = buildLantern(design, 4); scene.add(model);
+      const model = buildLantern(design, 4);
+      this._sharpenTextures(model);
+      scene.add(model);
       const bounds = new THREE.Box3().setFromObject(model);
       const center = bounds.getCenter(new THREE.Vector3());
       const radius = bounds.getBoundingSphere(new THREE.Sphere()).radius;
@@ -1396,10 +1413,10 @@
       const sameFrame = design.frame === this.frame;
       const phi = sameFrame ? this.controls.phi : design.frame === 'lotus' ? 1.02 : 1.42;
       const theta = sameFrame ? this.controls.theta : design.frame === 'rabbit' ? .18 : .3;
-      const distance = radius / Math.sin(19 * Math.PI / 180) * 1.06;
+      const distance = radius / Math.sin(19 * Math.PI / 180) * .96;
       camera.position.set(Math.sin(phi) * Math.sin(theta), Math.cos(phi), Math.sin(phi) * Math.cos(theta)).multiplyScalar(distance).add(center);
-      camera.lookAt(center);
-      camera.setViewOffset(1440, 1400, -80, -160, width, height);
+      camera.lookAt(center.clone().add(new THREE.Vector3(0, radius * .05, 0)));
+      camera.setViewOffset(1440, 1400, -80, -210, width, height);
       camera.updateMatrixWorld();
       scene.add(new THREE.AmbientLight(0xffffff, .2));
       scene.add(new THREE.HemisphereLight(0xfff4df, 0x637f7b, .28));
@@ -1410,21 +1427,35 @@
       ground.position.y = bounds.min.y - .55;
       ground.scale.setScalar(Math.max(2.4, radius * 1.4));
       scene.add(ground);
-      const halo = createHalo(); halo.material.opacity = 1;
-      positionHalo(halo, camera, center, radius); scene.add(halo);
+      const halo = createHalo(1024); halo.material.opacity = .86;
+      positionHalo(halo, camera, center, radius); halo.scale.multiplyScalar(.86); scene.add(halo);
       const size = this.renderer.getSize(new THREE.Vector2());
       const ratio = this.renderer.getPixelRatio();
       try {
-        this.renderer.setPixelRatio(1);
+        this.renderer.setPixelRatio(1.5);
         this.renderer.setSize(width, height, false);
         this.renderer.render(scene, camera);
-        ctx.drawImage(this.renderer.domElement, 0, 0);
+        ctx.drawImage(this.renderer.domElement, 0, 0, width, height);
       } finally {
         this.renderer.setPixelRatio(ratio);
         this.renderer.setSize(size.x, size.y, false);
         bgTex.dispose();
         disposeObject(scene);
         this.renderer.render(this.scene, this.camera);
+      }
+      // 纸面式后期层：压住边缘、提亮灯体周围，让下载图更像一张成品海报。
+      const centerGlow = ctx.createRadialGradient(width / 2, 850, 40, width / 2, 850, 720);
+      centerGlow.addColorStop(0, 'rgba(255,205,132,.12)');
+      centerGlow.addColorStop(.46, 'rgba(255,205,132,.04)');
+      centerGlow.addColorStop(1, 'rgba(255,205,132,0)');
+      ctx.fillStyle = centerGlow; ctx.fillRect(0, 0, width, height);
+      const edge = ctx.createRadialGradient(width / 2, height / 2, 420, width / 2, height / 2, 1220);
+      edge.addColorStop(0, 'rgba(0,0,0,0)');
+      edge.addColorStop(1, 'rgba(0,0,0,.34)');
+      ctx.fillStyle = edge; ctx.fillRect(0, 0, width, height);
+      ctx.fillStyle = 'rgba(255,241,205,.035)';
+      for (let y = 128; y < height - 128; y += 92) {
+        ctx.fillRect(120, y, width - 240, 1);
       }
       // 装裱：外框、内衬细线与四角记号
       ctx.strokeStyle = 'rgba(162,136,84,.85)'; ctx.lineWidth = 2;
@@ -1445,14 +1476,16 @@
       ctx.strokeRect(width / 2 - 20, 97, 40, 40);
       ctx.fillStyle = '#f8ecd8'; ctx.font = '32px "Songti SC","SimSun",serif';
       ctx.fillText('灯', width / 2, 118);
-      ctx.fillStyle = '#c2a570'; ctx.font = '22px "PingFang SC","Microsoft YaHei",sans-serif';
-      ctx.fillText('花 灯 手 作 · 灯 火 可 亲', width / 2, 178);
+      ctx.fillStyle = '#d1b77f'; ctx.font = '23px "PingFang SC","Microsoft YaHei",sans-serif';
+      ctx.fillText('花 灯 手 作 · 灯 下 有 愿', width / 2, 178);
       // 灯名：字间拉开全角空隙，更显疏朗
       const title = (design.name || '一盏团圆').split('').join('　');
       let fontSize = 72;
       do { ctx.font = `${fontSize}px "Songti SC","SimSun",serif`; fontSize -= 2; } while (ctx.measureText(title).width > 1280 && fontSize > 30);
-      ctx.fillStyle = '#f6e4bf'; ctx.fillText(title, width / 2, 1610);
-      ctx.fillStyle = '#cfc3a2'; ctx.font = '30px "PingFang SC","Microsoft YaHei",sans-serif';
+      ctx.fillStyle = '#f9e8bf'; ctx.shadowColor = 'rgba(0,0,0,.42)'; ctx.shadowBlur = 14;
+      ctx.fillText(title, width / 2, 1600);
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#d4c7a4'; ctx.font = '31px "PingFang SC","Microsoft YaHei",sans-serif';
       const wish = design.wish || '愿灯火可亲，所念皆如愿';
       const lines = []; let line = '';
       for (const char of wish) {
@@ -1460,7 +1493,7 @@
         line += char;
       }
       if (line) lines.push(line);
-      lines.forEach((text, i) => ctx.fillText(text, width / 2, 1716 + i * 50));
+      lines.slice(0, 3).forEach((text, i) => ctx.fillText(text, width / 2, 1706 + i * 52));
       // 分隔线中断处嵌一枚菱形记号
       ctx.fillStyle = '#8d7c58';
       ctx.fillRect(width / 2 - 34, 1848, 20, 2);
