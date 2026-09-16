@@ -659,7 +659,7 @@
         const w=width*Math.pow(Math.sin(Math.PI*t),.85);
         const arc=bend*Math.sin(Math.PI*t);
         return new THREE.Vector3(root[0]+dx*t+nx*(arc+u*w),root[1]+dy*t+ny*(arc+u*w),
-          root[2]+side*(.13*Math.sin(Math.PI*t)*(1-u*u)+(inner?.008:0)));
+          root[2]+side*(.13*Math.sin(Math.PI*t)*(1-u*u)+(inner ? .008 : 0)));
       };
       [-1,1].forEach(side => {
         [false,true].forEach(inner => {
@@ -875,7 +875,7 @@
     const lacquer = new THREE.MeshStandardMaterial({color:p.edge,roughness:.55,metalness:.1});
     const brass = new THREE.MeshStandardMaterial({color:METAL,roughness:.5,metalness:.4});
     const sleeve = new THREE.Mesh(new THREE.CylinderGeometry(radius*1.06,radius*1.06,.18,segments),lacquer);
-    sleeve.position.y=y+(top?.035:-.035); g.add(sleeve);
+    sleeve.position.y=y+(top ? .035 : -.035); g.add(sleeve);
     [-.075,.075].forEach(d => {
       const trim = new THREE.Mesh(new THREE.CylinderGeometry(radius*1.075,radius*1.075,.018,segments),brass);
       trim.position.y=sleeve.position.y+d; g.add(trim);
@@ -1021,7 +1021,7 @@
       if(stage>0) {
         [[.14,brass,side*.455],[.1,dark,side*.48],[.03,shine,side*.56]].forEach(([r,mat,z],i)=>{
           const eye=new THREE.Mesh(new THREE.SphereGeometry(r,20,14),mat);
-          eye.position.set(-1.12-(i===2?.027:0),.19+(i===2?.035:0),z);eye.scale.z=.5;g.add(eye);
+          eye.position.set(-1.12-(i===2 ? .027 : 0),.19+(i===2 ? .035 : 0),z);eye.scale.z=.5;g.add(eye);
         });
         const surface=(x,y)=>{
           const q=x/1.65,t=.88-.22*q,depth=.65*t*Math.sqrt(Math.max(0,1-q*q-(y/(.92*t))**2));
@@ -1029,7 +1029,7 @@
         };
         line(Array.from({length:25},(_,i)=>{const t=i/24;return surface(-.89+.19*Math.sin(t*Math.PI),.5-t*1.04);}));
         if(stage>=2) for(let row=-1;row<=1;row++) for(let col=0;col<5;col++) {
-          const cx=-.45+col*.29+(row===0?.1:0),cy=row*.25;
+          const cx=-.45+col*.29+(row===0 ? .1 : 0),cy=row*.25;
           line(Array.from({length:17},(_,i)=>{const a=-Math.PI*.48+i/16*Math.PI*.96;return surface(cx+.12*Math.cos(a),cy+.12*Math.sin(a));}));
         }
       }
