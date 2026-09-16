@@ -259,7 +259,7 @@ button:focus, button:focus-visible, a:focus, a:focus-visible { outline: 2px soli
   .step-description { color: #7c796f; font-size: 11px; line-height: 1.65; min-height: 0; margin: 4px 0 10px; }
   .step-content { flex: 1; display: flex; flex-direction: column; min-height: 0; }
   .option {
-    min-height: 58px; padding: 8px 22px 8px 10px; gap: 8px;
+    min-height: 68px; padding: 9px 22px 9px 11px; gap: 8px;
     border-color: var(--line); border-radius: 12px; background: rgba(255, 255, 255, .68);
     box-shadow: 0 5px 14px -14px rgba(65, 50, 34, .55);
   }
@@ -272,12 +272,27 @@ button:focus, button:focus-visible, a:focus, a:focus-visible { outline: 2px soli
   .option strong { font-size: 13px; }
   .option small { margin-top: 3px; font-size: 9px; }
   .options {
-    gap: 8px; max-height: none; flex: 1 1 auto; min-height: 0;
-    padding: 1px 1px 10px; margin: 0; background: transparent; border-radius: 0; box-shadow: none;
-    -webkit-mask-image: none; mask-image: none; scrollbar-width: none;
+    display: grid; grid-template-columns: none; grid-template-rows: 68px;
+    grid-auto-flow: column; grid-auto-columns: minmax(148px, 46vw);
+    gap: 8px; max-height: none; flex: 0 0 80px; min-height: 80px;
+    padding: 1px 1px 9px; margin: 0; overflow-x: auto; overflow-y: hidden;
+    background: transparent; border-radius: 0; box-shadow: none;
+    -webkit-mask-image: none; mask-image: none;
+    scroll-snap-type: x proximity; scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
   }
+  .option { scroll-snap-align: start; }
   .options::-webkit-scrollbar { display: none; }
-  .options.empty { flex: 0 0 auto; background: none; box-shadow: none; -webkit-mask-image: none; mask-image: none; padding: 0; }
+  .options.empty { flex: 0 0 auto; min-height: 0; background: none; box-shadow: none; -webkit-mask-image: none; mask-image: none; padding: 0; }
+  .option-scrollbar {
+    position: relative; flex: 0 0 4px; height: 4px; margin: 3px 1px 8px;
+    overflow: hidden; border-radius: 4px; background: rgba(207, 197, 179, .45);
+  }
+  .option-scrollbar span {
+    position: absolute; top: 0; bottom: 0; left: 0; width: 32%; border-radius: inherit;
+    background: var(--accent); box-shadow: 0 0 5px rgba(142, 68, 61, .18);
+    transform: translateX(0); will-change: transform;
+  }
   .wish-fields { flex: 1; }
   .workbench-footer {
     flex: 0 0 auto; gap: 10px; margin: 0 -14px;

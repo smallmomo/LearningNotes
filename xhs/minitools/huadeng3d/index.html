@@ -4,14 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>花灯手作 · 3D 立体版</title>
-    <link rel="stylesheet" href="style.css?v=20260916-mobile30" />
+    <link rel="stylesheet" href="style.css?v=20260916-mobile32" />
     <style>
       #artwork3d { width: 100%; height: 100%; display: block; touch-action: pan-y; cursor: grab; }
       #artwork3d:active { cursor: grabbing; }
     </style>
     <script defer src="three.min.js"></script>
-    <script defer src="lantern3d.js?v=20260916-color3"></script>
-    <script defer src="app3d.js?v=20260916-color34"></script>
+    <script defer src="lantern3d.js?v=20260916-no-export-halo4"></script>
+    <script defer src="app3d.js?v=20260916-scroll35"></script>
     <script defer src="music.js?v=20260916-music1"></script>
   </head>
   <body>
@@ -37,6 +37,7 @@
             <div class="step-heading"><span id="stepNumber">第一道</span><h3 id="stepTitle">扎一副灯骨</h3></div>
             <p class="step-description" id="stepDescription"></p>
             <div class="options" id="options"></div>
+            <div class="option-scrollbar" id="optionScrollbar" aria-hidden="true" hidden><span id="optionScrollThumb"></span></div>
             <div class="wish-fields" id="wishFields" hidden>
               <label for="lanternName">给它一个名字</label>
               <input id="lanternName" maxlength="16" placeholder="例如：春风照晚归" />

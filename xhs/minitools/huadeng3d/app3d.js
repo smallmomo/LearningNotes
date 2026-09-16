@@ -82,6 +82,21 @@
     toastTimer = setTimeout(() => $('toast').classList.remove('visible'), 2600);
   }
 
+  function updateOptionScrollbar() {
+    const options = $('options');
+    const track = $('optionScrollbar');
+    const thumb = $('optionScrollThumb');
+    if (!options || !track || !thumb) return;
+    const maxScroll = Math.max(0, options.scrollWidth - options.clientWidth);
+    const visible = !options.classList.contains('empty') && maxScroll > 1;
+    track.hidden = !visible;
+    if (!visible) return;
+    const ratio = Math.max(.16, options.clientWidth / options.scrollWidth);
+    const maxTravel = track.clientWidth * (1 - ratio);
+    thumb.style.width = `${ratio * 100}%`;
+    thumb.style.transform = `translateX(${maxScroll ? options.scrollLeft / maxScroll * maxTravel : 0}px)`;
+  }
+
   function updateArt(rebuild = true) {
     if (rebuild) studio.setDesign(selection, completed ? 4 : Math.min(step, 3));
     $('previewName').textContent = completed ? selection.name || '一盏团圆' : steps[step].caption;
@@ -177,6 +192,8 @@
     });
     // Chrome 61 不支持 :has()，改用 class 判断选项框是否为空以收回弹性高度。
     $('options').classList.toggle('empty', optionButtons.length === 0);
+    $('options').scrollLeft = 0;
+    requestAnimationFrame(updateOptionScrollbar);
 
     $('wishFields').hidden = step !== 4;
     $('backButton').disabled = step === 0;
@@ -336,6 +353,8 @@
   $('restartButton').onclick = () => goToStep(0);
   $('collectionButton').onclick = showCollection;
   $('returnButton').onclick = () => { $('collection').hidden = true; $('workshop').hidden = false; };
+  $('options').addEventListener('scroll', updateOptionScrollbar, { passive: true });
+  window.addEventListener('resize', updateOptionScrollbar);
   $('count').textContent = collection.length;
   renderStep();
 })();

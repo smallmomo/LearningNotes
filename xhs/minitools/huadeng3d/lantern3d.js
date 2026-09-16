@@ -1424,8 +1424,6 @@
       ground.position.y = bounds.min.y - .55;
       ground.scale.setScalar(Math.max(2.4, radius * 1.4));
       scene.add(ground);
-      const halo = createHalo(1024); halo.material.opacity = 1;
-      positionHalo(halo, camera, center, radius); scene.add(halo);
       const size = this.renderer.getSize(new THREE.Vector2());
       const ratio = this.renderer.getPixelRatio();
       try {
