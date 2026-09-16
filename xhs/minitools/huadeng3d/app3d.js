@@ -80,14 +80,19 @@
     $('steps').replaceChildren();
     steps.forEach((item, index) => {
       const button = document.createElement('button');
-      button.textContent = `${String(index + 1).padStart(2, '0')} ${item.label}`;
+      const number = document.createElement('b');
+      number.textContent = String(index + 1).padStart(2, '0');
+      const label = document.createElement('span');
+      label.textContent = item.label;
+      button.append(number, label);
       button.classList.toggle('active', step === index);
+      button.classList.toggle('done', index < step);
       button.setAttribute('aria-current', step === index ? 'step' : 'false');
       button.onclick = () => goToStep(index);
       $('steps').append(button);
     });
 
-    $('stageLabel').textContent = `${String(step + 1).padStart(2, '0')} / ${current.label}`;
+    $('stageLabel').textContent = completed ? '心愿已点亮' : `${String(step + 1).padStart(2, '0')} / ${current.label}`;
     $('stepNumber').textContent = ['第一道', '第二道', '第三道', '第四道', '第五道'][step];
     $('stepTitle').textContent = completed ? '灯火已亮，心愿已藏' : current.title;
     $('stepDescription').textContent = completed ? '保存一张带有花灯、名字与祝福的图片，把这份温暖留住。' : current.description;
