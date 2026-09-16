@@ -144,6 +144,8 @@
         selection[current.key] = value;
         if (current.key === 'frame' && value === 'palace' && !palacePatternSuggested) {
           selection.pattern = 'baoxiang';
+          selection.paper = 'jade';
+          selection.tassel = 'jade';
           palacePatternSuggested = true;
         }
         for (const [btn, val] of optionButtons) {

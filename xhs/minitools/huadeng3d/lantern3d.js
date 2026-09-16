@@ -190,6 +190,15 @@
     wash.addColorStop(.65, 'rgba(255,240,206,.04)');
     wash.addColorStop(1, 'rgba(65,27,18,.14)');
     x.fillStyle = wash; x.fillRect(0, 0, 512, 512);
+    if (aspect !== 1) {
+      // 宫灯窗心透暖光，四周保留所选纸色，避免整块纯色塑料感。
+      const glow=x.createRadialGradient(256,278,8,256,278,330);
+      glow.addColorStop(0,'rgba(255,235,170,.85)');
+      glow.addColorStop(.38,'rgba(255,221,151,.48)');
+      glow.addColorStop(.8,'rgba(255,225,161,.04)');
+      glow.addColorStop(1,'rgba(12,43,39,.2)');
+      x.fillStyle=glow; x.fillRect(0,0,512,512);
+    }
     x.strokeStyle = p.ink;
     x.fillStyle = p.ink;
     x.lineCap = 'round';
@@ -420,6 +429,21 @@
       twig(191,285,291,250,424,289,11,1.8,.7);
       twig(233,226,229,129,279,76,7,1.5,.6);
       x.globalAlpha = 1;
+    }
+    if (aspect !== 1 && pattern !== 'plain') {
+      x.save(); x.strokeStyle='#ecd08b'; x.fillStyle='#ecd08b';
+      x.globalAlpha=.85; x.lineWidth=2;
+      x.strokeRect(24,18,464,476); x.lineWidth=1; x.strokeRect(33,25,446,462);
+      // 卷草角花与中央团花分开，留下透光的空白。
+      [[50,64,1,1],[462,64,-1,1],[50,448,1,-1],[462,448,-1,-1]].forEach(([cx,cy,sx,sy])=>{
+        x.save(); x.translate(cx,cy); x.scale(sx,sy*aspect); x.lineWidth=3;
+        x.beginPath(); x.moveTo(0,105); x.bezierCurveTo(7,59,83,69,77,24);
+        x.bezierCurveTo(71,-11,29,-3,34,24); x.bezierCurveTo(38,43,61,38,57,23); x.stroke();
+        x.beginPath(); x.moveTo(13,72); x.quadraticCurveTo(9,35,26,31); x.quadraticCurveTo(43,54,13,72); x.fill();
+        x.beginPath(); x.moveTo(41,60); x.quadraticCurveTo(88,67,91,44); x.quadraticCurveTo(62,35,41,60); x.fill();
+        x.restore();
+      });
+      x.restore();
     }
     const tex = new THREE.CanvasTexture(c);
     if ('colorSpace' in tex) tex.colorSpace = THREE.SRGBColorSpace;
@@ -758,7 +782,7 @@
 
   function buildPalace(p, stage, selection) {
     const g = new THREE.Group();
-    const brass = new THREE.MeshStandardMaterial({color:0xc39446,metalness:.65,roughness:.35});
+    const brass = new THREE.MeshStandardMaterial({color:0xe0ad50,metalness:.38,roughness:.42,emissive:0x9a611c,emissiveIntensity:.22});
     const enamel = new THREE.MeshStandardMaterial({color:p.edge,metalness:.25,roughness:.5});
     const paper = paperMaterial(p,stage >= 4,stage >= 2 ? selection.pattern : 'plain',1.12/2.15);
     const tube = (points,radius=.025) => {
@@ -772,9 +796,9 @@
       // 六边框采用直边，不把折角平滑成圆形。
       for(let i=0;i<6;i++) tube([points[i],points[i+1]],thickness);
     };
-    const tier = (rt,rb,height,y,material) => {
-      const mesh=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,height,6),material);
-      mesh.rotation.y=Math.PI/6; mesh.position.y=y; g.add(mesh);
+    const tier = (profile,material) => {
+      const mesh=new THREE.Mesh(new THREE.LatheGeometry(profile.map(([r,y])=>new THREE.Vector2(r,y)),6),material);
+      mesh.rotation.y=Math.PI/6; g.add(mesh);
     };
     const ornament = (cx,cy,cz,scale=1) => {
       const group=new THREE.Group(); group.position.set(cx,cy,cz); group.scale.setScalar(scale);
@@ -798,9 +822,24 @@
         post.position.set(x,0,1.01); frame.add(post);
       });
       if(stage>=2 && selection.pattern === 'baoxiang') {
-        const medallion=new THREE.Mesh(new THREE.TorusGeometry(.31,.019,8,48),brass);
-        medallion.position.set(0,.05,1.018); frame.add(medallion);
+        const outline=[];
+        for(let i=0;i<=96;i++) {
+          const a=i/96*Math.PI*2, r=.32+.025*Math.cos(a*8);
+          outline.push(new THREE.Vector3(Math.cos(a)*r,.05+Math.sin(a)*r,1.026));
+        }
+        const medallion=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(outline),96,.015,8,false),brass);
+        frame.add(medallion);
       }
+      // 檐下如意挂牙、底边珠钉，六面都有完整装饰。
+      [-1,1].forEach(sign=>{
+        const points=[[-.55,sign*1.12,1.03],[-.34,sign*1.02,1.03],[0,sign*.93,1.03],[.34,sign*1.02,1.03],[.55,sign*1.12,1.03]];
+        const curve=new THREE.CatmullRomCurve3(points.map(v=>new THREE.Vector3(...v)));
+        frame.add(new THREE.Mesh(new THREE.TubeGeometry(curve,32,.02,8,false),brass));
+        for(let i=-3;i<=3;i++) {
+          const bead=new THREE.Mesh(new THREE.SphereGeometry(.035,10,8),brass);
+          bead.position.set(i*.14,sign*(1.01+Math.abs(i)*.025),1.045); frame.add(bead);
+        }
+      });
       g.add(frame);
       const angle=a+Math.PI/6;
       const sx=Math.sin(angle), sz=Math.cos(angle);
@@ -811,10 +850,10 @@
     ring(1.19,1.13,.046); ring(1.23,-1.12,.046); ring(1.31,-1.22,.028);
     // 层叠檐顶与收拢底座。
     if(stage>0) {
-      tier(.34,1.39,.42,1.49,enamel);
-      tier(1.22,.38,.4,-1.38,enamel);
+      tier([[1.39,1.28],[1.18,1.3],[.95,1.34],[.72,1.41],[.51,1.53],[.34,1.7]],enamel);
+      tier([[.38,-1.63],[.58,-1.57],[.84,-1.43],[1.05,-1.3],[1.22,-1.18]],enamel);
     }
-    ring(1.39,1.28,.035); ring(.35,1.7,.025); ring(.39,-1.58,.025);
+    ring(1.39,1.28,.035); ring(1.36,1.22,.024); ring(.35,1.7,.025); ring(.55,1.52,.02); ring(.39,-1.58,.025);
     const crown=new THREE.Mesh(new THREE.SphereGeometry(.28,24,16),brass);
     crown.position.y=1.77; crown.scale.y=.65; g.add(crown);
     const base=new THREE.Mesh(new THREE.SphereGeometry(.25,24,16),brass);
