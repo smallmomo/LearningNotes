@@ -35,7 +35,13 @@
 
   const TASSEL = {
     red:  { dark: 0x69291e, light: 0xdf7944 },
-    gold: { dark: 0x766034, light: 0xe6c780 }
+    gold: { dark: 0x766034, light: 0xe6c780 },
+    jade: { dark: 0x365e50, light: 0x9fc3a3 },
+    ivory: { dark: 0xb5a78b, light: 0xfff0d3 },
+    indigo: { dark: 0x34476d, light: 0x91abd1 },
+    rose: { dark: 0x925d63, light: 0xe4b2ad },
+    lilac: { dark: 0x6b507e, light: 0xc8a9da },
+    redgold: { dark: 0x963e2d, light: 0xe6c780, mixed: true }
   };
 
   const SCALE = 0.015;
@@ -234,7 +240,7 @@
           const ny = 512 - (512 - topY) * frac;
           const nx = bx + lean * (512 - ny) * .1;
           x.lineWidth = w * (1 - frac * .3);
-          x.beginPath(); x.moveTo(prevX, prevY); x.lineTo(nx, ny); x.stroke();
+          x.beginPath(); x.moveTo(prevX, prevY - 4); x.lineTo(nx, ny + 4); x.stroke();
           x.lineWidth = w * (1 - frac * .3) * .55;
           x.beginPath(); x.moveTo(nx - w * .55, ny); x.lineTo(nx + w * .55, ny - 2); x.stroke();
           prevX = nx; prevY = ny;
@@ -244,75 +250,99 @@
       stalk(300, .4, 170, 7, .7);   // 辅竿，远淡
       // 叶组集中在两竿之间的中段，形成视觉中心
       const leaf = (lx, ly, ang, len, alpha) => {
-        x.globalAlpha = alpha; x.lineWidth = 3;
-        x.beginPath(); x.moveTo(lx, ly);
-        x.quadraticCurveTo(lx + Math.cos(ang) * len * .5, ly + Math.sin(ang) * len * .5 - 3,
-                           lx + Math.cos(ang) * len, ly + Math.sin(ang) * len);
-        x.stroke();
+        x.save(); x.translate(lx, ly); x.rotate(ang); x.globalAlpha = alpha;
+        x.beginPath(); x.moveTo(0, 0);
+        x.bezierCurveTo(len * .3, -9, len * .72, -5, len, 0);
+        x.bezierCurveTo(len * .62, 7, len * .25, 4, 0, 0);
+        x.fill(); x.restore();
       };
       const cluster = (lx, ly, dir, alpha) => {
-        leaf(lx, ly, dir - .55, 40, alpha);
-        leaf(lx, ly, dir - .1, 50, alpha * .9);
-        leaf(lx, ly, dir + .35, 42, alpha * .75);
+        x.save(); x.translate(lx, ly); x.rotate(dir);
+        x.globalAlpha = alpha; x.lineWidth = 1.8;
+        x.beginPath(); x.moveTo(0, 0); x.quadraticCurveTo(48, -10, 95, 0); x.stroke();
+        leaf(18, -3, -.9, 48, alpha * .7);
+        leaf(38, -5, -.65, 58, alpha);
+        leaf(63, -4, -.4, 48, alpha * .8);
+        leaf(28, -4, .9, 48, alpha);
+        leaf(54, -4, .65, 54, alpha * .85);
+        leaf(79, -2, .3, 43, alpha * .7);
+        x.restore();
       };
-      cluster(178, 220, -2.4, 1);    // 主竿上部，左向
-      cluster(210, 170, -.5, .95);   // 主竿顶部，右向
-      cluster(255, 260, -.8, .9);    // 两竿之间
-      cluster(315, 250, -2.2, .8);   // 辅竿上
-      cluster(290, 340, 2.6, .7);    // 辅竿下段，右向
+      cluster(173, 174, -.3, .95);
+      cluster(177, 259, -2.8, .85);
+      cluster(311, 239, -2.5, .55);
+      cluster(308, 307, -.1, .8);
       x.globalAlpha = 1;
     } else if (pattern === 'orchid') {
       // 幽兰吐芳：一丛兰叶从右下角放射，花只一朵为主
       const blade = (x0, y0, cx, cy, x1, y1, w, alpha) => {
-        x.globalAlpha = alpha; x.lineWidth = w;
+        x.globalAlpha = alpha;
         x.beginPath(); x.moveTo(x0, y0);
         x.quadraticCurveTo(cx, cy, x1, y1);
-        x.stroke();
+        x.quadraticCurveTo(cx + w * 2, cy + w, x0, y0);
+        x.fill();
       };
       // 根部聚在右下一点，叶向左上放射——书法撇法
-      blade(390, 440, 300, 330, 180, 300, 7, 1);      // 主叶，最浓最长
-      blade(392, 445, 330, 400, 240, 470, 5, .85);    // 披叶，先垂后撇
-      blade(388, 442, 280, 380, 150, 430, 4.5, .7);   // 垂叶
-      blade(394, 448, 360, 300, 330, 200, 4, .8);     // 直立短叶
-      blade(390, 443, 260, 280, 110, 210, 3.5, .55);  // 远淡长叶
-      // 一朵主花缀在叶腰，含三点花芯
-      x.globalAlpha = 1; x.lineWidth = 2.4;
-      const fx = 235, fy = 330;
-      for (let i = 0; i < 5; i++) {
-        const a = -.5 + (i / 5) * Math.PI * 2;
-        x.beginPath(); x.moveTo(fx, fy);
-        x.quadraticCurveTo(fx + Math.cos(a - .4) * 34, fy + Math.sin(a - .4) * 34,
-                           fx + Math.cos(a) * 30, fy + Math.sin(a) * 30);
-        x.quadraticCurveTo(fx + Math.cos(a + .4) * 34, fy + Math.sin(a + .4) * 34, fx, fy);
-        x.stroke();
-      }
-      x.beginPath(); x.arc(fx, fy, 5, 0, Math.PI * 2); x.fill();
+      blade(292, 452, 120, 198, 88, 346, 7, .78);
+      blade(292, 452, 179, 313, 114, 416, 5, .6);
+      blade(292, 452, 207, 221, 236, 129, 6, .92);
+      blade(292, 452, 356, 142, 412, 262, 7, .8);
+      blade(292, 452, 319, 254, 345, 214, 4, .55);
+      blade(292, 452, 365, 322, 441, 379, 5, .9);
+      x.globalAlpha = .8; x.lineWidth = 2.2;
+      x.beginPath(); x.moveTo(291, 451); x.quadraticCurveTo(273, 307, 229, 254); x.stroke();
+      x.beginPath(); x.moveTo(291, 426); x.quadraticCurveTo(331, 318, 355, 301); x.stroke();
+      const blossom = (cx, cy, scale, angle) => {
+        x.save(); x.translate(cx, cy); x.rotate(angle); x.scale(scale, scale);
+        [[-7,-47,10],[-43,-18,13],[40,-27,12],[-33,24,8],[30,29,8]].forEach(([ex,ey,w], i) => {
+          const len = Math.hypot(ex, ey), nx = -ey / len, ny = ex / len;
+          x.globalAlpha = i < 3 ? .65 : .85;
+          x.beginPath(); x.moveTo(0,0);
+          x.quadraticCurveTo(ex * .55 + nx * w, ey * .55 + ny * w, ex, ey);
+          x.quadraticCurveTo(ex * .55 - nx * w, ey * .55 - ny * w, 0,0); x.fill();
+        });
+        x.globalAlpha = 1; x.lineWidth = 2;
+        x.beginPath(); x.moveTo(-8,5); x.bezierCurveTo(-13,26,14,25,10,7); x.stroke();
+        [[-4,1],[3,-3],[5,6]].forEach(([a,b]) => { x.beginPath(); x.ellipse(a,b,2,3,-.4,0,Math.PI*2); x.fill(); });
+        x.restore();
+      };
+      blossom(229, 254, 1, -.24);
+      blossom(355, 301, .72, .4);
       x.globalAlpha = 1;
     } else if (pattern === 'fish') {
-      // 年年有余：一主一辅双鱼，同向而游，构图聚于中带
+      // 双鱼相向回游，鱼头、鳃线与闭合扇尾形成清楚的轮廓。
       const fish = (cx, cy, s, flip, alpha) => {
         x.save(); x.translate(cx, cy); x.scale(flip ? -s : s, s);
+        x.rotate(-.22);
         x.globalAlpha = alpha;
         x.lineWidth = 3.5;
         // 鱼身一笔梭形
         x.beginPath(); x.moveTo(-75, 0);
         x.bezierCurveTo(-45, -36, 30, -38, 70, -6);
         x.bezierCurveTo(30, 38, -45, 36, -75, 0);
-        x.closePath(); x.stroke();
+        x.closePath();
+        x.globalAlpha = alpha * .12; x.fill(); x.globalAlpha = alpha; x.stroke();
         // 鱼尾两笔
         x.lineWidth = 2.5;
-        x.beginPath(); x.moveTo(66, 0); x.quadraticCurveTo(98, -20, 116, -30); x.stroke();
-        x.beginPath(); x.moveTo(66, 0); x.quadraticCurveTo(98, 20, 114, 32); x.stroke();
+        x.beginPath(); x.moveTo(64, -5);
+        x.bezierCurveTo(82, -8, 94, -32, 116, -36);
+        x.quadraticCurveTo(109, -11, 97, 0);
+        x.quadraticCurveTo(111, 16, 114, 34);
+        x.bezierCurveTo(90, 30, 81, 10, 64, 5); x.closePath();
+        x.globalAlpha = alpha * .18; x.fill(); x.globalAlpha = alpha; x.stroke();
+        x.lineWidth = 1.2;
+        [-24,-12,14,25].forEach(y => { x.beginPath(); x.moveTo(70,0); x.quadraticCurveTo(88,y*.4,106,y); x.stroke(); });
         // 背鳍一笔，胸鳍一笔
-        x.beginPath(); x.moveTo(-20, -30); x.quadraticCurveTo(0, -52, 26, -36); x.stroke();
+        x.beginPath(); x.moveTo(-25, -27); x.quadraticCurveTo(-3, -54, 28, -40); x.lineTo(40,-22); x.quadraticCurveTo(8,-35,-25,-27); x.stroke();
         x.lineWidth = 2;
-        x.beginPath(); x.moveTo(-34, 22); x.quadraticCurveTo(-22, 44, -2, 30); x.stroke();
+        x.beginPath(); x.moveTo(-34, 16); x.quadraticCurveTo(-23, 48, 2, 39); x.quadraticCurveTo(-9,23,-34,16); x.stroke();
+        x.beginPath(); x.moveTo(-43,-21); x.quadraticCurveTo(-27,0,-44,23); x.stroke();
         // 鳞片四列，弧口朝尾
         x.lineWidth = 1.3;
         for (let row = 0; row < 2; row++) {
           for (let col = 0; col < 4; col++) {
             x.beginPath();
-            x.arc(-44 + col * 24, -10 + row * 22, 9, Math.PI * .1, Math.PI * .9);
+            x.arc(-22 + col * 18, -9 + row * 17, 7, -Math.PI * .42, Math.PI * .42);
             x.stroke();
           }
         }
@@ -320,8 +350,8 @@
         x.beginPath(); x.arc(-62, -8, 4, 0, Math.PI * 2); x.fill();
         x.restore();
       };
-      fish(200, 230, 1.3, false, 1);      // 主鱼，向右
-      fish(340, 330, .95, false, .75);    // 辅鱼，同向小而淡
+      fish(210, 210, 1.15, false, .95);
+      fish(300, 340, 1, true, .78);
       // 底部一丛水草，三叶向右倒——有水流感
       x.lineWidth = 2.2;
       [[120, 470], [200, 485], [280, 480]].forEach(([bx, by], i) => {
@@ -332,34 +362,37 @@
       });
       x.globalAlpha = 1;
     } else if (pattern === 'willow') {
-      // 雪柳依依：一株垂柳占左上，丝绦垂满，右下留白配雪点
-      // 主干从左上角斜入
-      x.lineWidth = 7;
-      x.beginPath(); x.moveTo(20, 70); x.quadraticCurveTo(120, 80, 200, 180); x.stroke();
-      x.lineWidth = 3;
-      x.beginPath(); x.moveTo(55, 78); x.quadraticCurveTo(140, 120, 195, 185); x.stroke();
-      // 树冠横枝一笔
-      x.lineWidth = 2.2;
-      x.beginPath(); x.moveTo(150, 130); x.quadraticCurveTo(280, 120, 380, 175); x.stroke();
-      x.beginPath(); x.moveTo(120, 150); x.quadraticCurveTo(200, 165, 300, 215); x.stroke();
-      // 垂丝从枝上等距垂下，长短渐变（中长边短），尾端同向轻摆
-      for (let i = 0; i < 9; i++) {
-        const sx = 155 + i * 26;
-        const sy = 132 + i * 8;
-        const len = 210 * Math.sin(Math.PI * (.15 + i / 9 * .7)) + 60;
-        x.globalAlpha = .3 + .5 * Math.sin(Math.PI * (.2 + i / 9 * .6));
-        x.lineWidth = 1.7;
-        x.beginPath(); x.moveTo(sx, sy);
-        x.bezierCurveTo(sx + 12, sy + len * .45, sx + 2, sy + len * .75, sx + 26, sy + len);
-        x.stroke();
-      }
-      // 右下留白处几点雪，聚散分明
-      [[350, 300, 5, .9], [410, 350, 4, .7], [330, 380, 3.5, .8], [430, 430, 4.5, .6], [370, 440, 3, .55]].forEach(([cx, cy, r, a]) => {
-        x.globalAlpha = a * .25;
-        x.beginPath(); x.arc(cx, cy, r * 2, 0, Math.PI * 2); x.fill();
-        x.globalAlpha = a;
-        x.beginPath(); x.arc(cx, cy, r, 0, Math.PI * 2); x.fill();
-      });
+      // 雪柳：弧形木枝上簇生小花，花位沿曲线分布，疏密自然。
+      const flower = (cx, cy, r, angle) => {
+        x.save(); x.translate(cx,cy); x.rotate(angle);
+        for (let j = 0; j < 5; j++) {
+          const a = j * Math.PI * 2 / 5;
+          x.globalAlpha = .7; x.lineWidth = 1;
+          x.beginPath(); x.ellipse(Math.cos(a)*r*.55,Math.sin(a)*r*.55,r*.5,r*.34,a,0,Math.PI*2);
+          x.fillStyle = p.paper; x.fill(); x.stroke();
+        }
+        x.globalAlpha = .95; x.fillStyle = p.ink;
+        x.beginPath(); x.arc(0,0,1.5,0,Math.PI*2); x.fill(); x.restore();
+      };
+      const twig = (sx,sy,cx,cy,ex,ey,count,width,alpha) => {
+        x.globalAlpha = alpha; x.lineWidth = width;
+        x.beginPath(); x.moveTo(sx,sy); x.quadraticCurveTo(cx,cy,ex,ey); x.stroke();
+        for (let i = 1; i <= count; i++) {
+          const t = .18 + i / (count + 1) * .77, u = 1-t;
+          const bx = u*u*sx + 2*u*t*cx + t*t*ex;
+          const by = u*u*sy + 2*u*t*cy + t*t*ey;
+          const side = i % 2 ? -1 : 1;
+          const fx = bx + side * (8 + i % 3 * 2), fy = by - 5;
+          x.globalAlpha = alpha; x.lineWidth = 1;
+          x.beginPath(); x.moveTo(bx,by); x.lineTo(fx,fy); x.stroke();
+          flower(fx,fy,6 + i % 3, i * 1.7);
+          if (i % 3 === 0) flower(bx-side*8,by+5,5,i);
+        }
+      };
+      twig(114,463,170,228,371,110,13,3.3,.9);
+      twig(145,369,124,229,77,169,8,1.8,.65);
+      twig(191,285,291,250,424,289,11,1.8,.7);
+      twig(233,226,229,129,279,76,7,1.5,.6);
       x.globalAlpha = 1;
     }
     const tex = new THREE.CanvasTexture(c);
@@ -566,7 +599,7 @@
         const t=k/12;
         points.push(new THREE.Vector3(Math.cos(angle)*r*(1+.14*t)+.035*Math.sin(t*Math.PI),-.59-t*(len-.59)+.035*t*Math.sin(i*2.4),Math.sin(angle)*r*(1+.14*t)));
       }
-      const material = threads[i%4===0?1:0];
+      const material = threads[colors.mixed ? i % 2 : i % 4 === 0 ? 1 : 0];
       g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points),material));
     }
     return g;
@@ -634,7 +667,7 @@
       ]), cord)));
     }
 
-    if (stage >= 3) {
+    if (stage >= 3 && selection.tassel !== 'none') {
       const tassel = buildTassel(TASSEL[selection.tassel] || TASSEL.red, 1.6);
       tassel.position.y = bottom;
       g.add(tassel);
