@@ -1205,10 +1205,19 @@
   class LanternStudio {
     constructor(canvas) {
       this.canvas = canvas;
-      this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
-      this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-      if ('outputColorSpace' in this.renderer) this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-      else if ('outputEncoding' in this.renderer) this.renderer.outputEncoding = THREE.sRGBEncoding;
+      this.renderer = null;
+      this._paused = false;
+      this._qualityDropped = false;
+      this._frameCost = 16;
+      try {
+        this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+        this.renderer.setPixelRatio(this._clampedPixelRatio());
+        if ('outputColorSpace' in this.renderer) this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+        else if ('outputEncoding' in this.renderer) this.renderer.outputEncoding = THREE.sRGBEncoding;
+      } catch (err) {
+        // WebGL 不可用：进入 2D 兜底，仍可完成制作与收藏。
+        this._showFallback();
+      }
       this.scene = new THREE.Scene();
       this.scene.background = new THREE.Color(0x172b2d);
       this.camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
@@ -1237,14 +1246,30 @@
       this.clock = new THREE.Clock();
       this._resize();
       window.addEventListener('resize', () => this._resize());
-      new ResizeObserver(() => this._resize()).observe(canvas.parentElement);
+      if (typeof ResizeObserver !== 'undefined') new ResizeObserver(() => this._resize()).observe(canvas.parentElement);
+      canvas.addEventListener('webglcontextlost', (event) => { event.preventDefault(); this._paused = true; });
+      canvas.addEventListener('webglcontextrestored', () => { this._paused = false; this.clock.getDelta(); });
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) this.clock.getDelta(); });
       this._animate();
+    }
+
+    _clampedPixelRatio() {
+      return Math.min(window.devicePixelRatio || 1, 1.5);
+    }
+
+    _showFallback() {
+      this.renderer = null;
+      const host = this.canvas.parentElement;
+      const msg = document.createElement('div');
+      msg.className = 'webgl-fallback';
+      msg.textContent = '当前设备不支持 3D 渲染，仍可完成制作与收藏。';
+      host.appendChild(msg);
     }
 
     _resize() {
       const w = this.canvas.clientWidth || 600;
       const h = this.canvas.clientHeight || 600;
-      this.renderer.setSize(w, h, false);
+      if (this.renderer) this.renderer.setSize(w, h, false);
       this.camera.aspect = w / h;
       this.camera.updateProjectionMatrix();
       if (this.designRadius) this._fitCamera();
@@ -1256,7 +1281,7 @@
         this.scene.remove(this.lantern);
       }
       const changedShape = this.frame !== selection.frame;
-      this.selection = { ...selection };
+      this.selection = Object.assign({}, selection);
       this.frame = selection.frame;
       this.lantern = buildLantern(selection, stage);
       this.lantern.position.y = 0.2;
@@ -1307,7 +1332,27 @@
       });
     }
 
+    _staticPoster(design) {
+      // 无 WebGL 时的 2D 兜底海报：只保留姓名与心愿的装裱卡片。
+      const width = 1600, height = 2000;
+      const c = document.createElement('canvas');
+      c.width = width; c.height = height;
+      const ctx = c.getContext('2d');
+      const g = ctx.createLinearGradient(0, 0, 0, height);
+      g.addColorStop(0, '#0a141a'); g.addColorStop(1, '#13252a');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, width, height);
+      ctx.strokeStyle = 'rgba(162,136,84,.85)'; ctx.lineWidth = 2;
+      ctx.strokeRect(48, 48, width - 96, height - 96);
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#f6e4bf'; ctx.font = '72px "Songti SC","SimSun",serif';
+      ctx.fillText(design.name || '一盏团圆', width / 2, height / 2 - 40);
+      ctx.fillStyle = '#cfc3a2'; ctx.font = '30px "PingFang SC","Microsoft YaHei",sans-serif';
+      ctx.fillText(design.wish || '愿灯火可亲，所念皆如愿', width / 2, height / 2 + 60);
+      return c;
+    }
+
     exportCanvas(design = this.selection) {
+      if (!this.renderer) return this._staticPoster(design);
       // Render independently from the preview: no stage change, zoom crop or mobile-resolution export.
       const width = 1600, height = 2000;
       const poster = document.createElement('canvas');
@@ -1420,7 +1465,15 @@
 
     _animate() {
       requestAnimationFrame(() => this._animate());
+      if (!this.renderer || this._paused || document.hidden) { this.clock.getDelta(); return; }
       const delta = Math.min(this.clock.getDelta(), .1);
+      // 运行时持续掉帧时一次性把像素比降到 1，保证低端机可交互。
+      this._frameCost += (Math.max(delta * 1000, 0) - this._frameCost) * .04;
+      if (!this._qualityDropped && this._frameCost > 52) {
+        this._qualityDropped = true;
+        this.renderer.setPixelRatio(1);
+        this._resize();
+      }
       const t = this.clock.elapsedTime;
       const motion = !this.reducedMotion && this.motionOn;
       if (this.lantern) {

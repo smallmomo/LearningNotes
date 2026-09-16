@@ -1,6 +1,23 @@
 /* 3D 版流程控制（普通脚本，配合 lantern3d.js 的全局 LanternStudio）。 */
 (function () {
   const $ = (id) => document.getElementById(id);
+  function clear(el) { while (el.firstChild) el.removeChild(el.firstChild); }
+  // Chrome 61 基线不识别 Flex gap（Chrome 84+），用行为检测决定是否启用 gap 增强层。
+  function supportsFlexGap() {
+    var flex = document.createElement('div');
+    flex.style.position = 'absolute';
+    flex.style.visibility = 'hidden';
+    flex.style.display = 'flex';
+    flex.style.flexDirection = 'column';
+    flex.style.rowGap = '1px';
+    flex.appendChild(document.createElement('div'));
+    flex.appendChild(document.createElement('div'));
+    document.body.appendChild(flex);
+    var supported = flex.scrollHeight === 1;
+    flex.parentNode.removeChild(flex);
+    return supported;
+  }
+  if (supportsFlexGap()) document.documentElement.classList.add('supports-flex-gap');
   const storageKey = 'huadeng-3d-state';
   const selection = { frame: 'round', paper: 'vermilion', pattern: 'plum', tassel: 'red', name: '', wish: '' };
   let step = 0;
@@ -53,7 +70,7 @@
     try {
       const value = JSON.parse(localStorage.getItem(storageKey) || '{}');
       return Array.isArray(value.collection) ? value.collection : [];
-    } catch {
+    } catch (e) {
       return [];
     }
   }
@@ -91,7 +108,7 @@
 
   function renderStep() {
     const current = steps[step];
-    $('steps').replaceChildren();
+    clear($('steps'));
     steps.forEach((item, index) => {
       const button = document.createElement('button');
       const number = document.createElement('b');
@@ -110,7 +127,7 @@
     $('stepNumber').textContent = ['第一道', '第二道', '第三道', '第四道', '第五道'][step];
     $('stepTitle').textContent = completed ? '灯火已亮，心愿已藏' : current.title;
     $('stepDescription').textContent = completed ? '保存一张带有花灯、名字与祝福的图片，把这份温暖留住。' : current.description;
-    $('options').replaceChildren();
+    clear($('options'));
 
     const optionButtons = [];
     (current.choices || []).forEach(([value, name, note, sample]) => {
@@ -158,6 +175,8 @@
       };
       $('options').append(button);
     });
+    // Chrome 61 不支持 :has()，改用 class 判断选项框是否为空以收回弹性高度。
+    $('options').classList.toggle('empty', optionButtons.length === 0);
 
     $('wishFields').hidden = step !== 4;
     $('backButton').disabled = step === 0;
@@ -197,34 +216,34 @@
 
   async function downloadPicture(design) {
     if (downloading) return;
-    design = { ...(design || selection) };
+    design = Object.assign({}, design || selection);
     downloading = true;
     $('downloadButton').disabled = true;
     $('downloadButton').textContent = '正在生成高清图…';
     try {
       await document.fonts.ready;
       const canvas = studio.exportCanvas(design);
-      const blob = await new Promise((resolve, reject) => canvas.toBlob(value => value ? resolve(value) : reject(new Error('Export failed')), 'image/png'));
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${(design.name || '一盏团圆').replace(/[\\/:*?"<>|]/g, '_')}.png`;
-      document.body.append(link);
-      link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 60000);
-      showToast('高清花灯纪念图已生成，下载已开始');
-    } catch {
-      showToast('图片未能导出，请重试');
+      const dataURL = canvas.toDataURL('image/png');
+      // 容器禁止 a[download]/blob 下载，改用 JSBridge 写临时文件后存入相册。
+      const tool = window.xhs && window.xhs.miniTool;
+      if (tool && tool.writeTempFile && tool.saveImageToPhotosAlbum) {
+        const result = await tool.writeTempFile({ data: dataURL });
+        await tool.saveImageToPhotosAlbum({ filePath: result.filePath });
+        showToast('高清花灯纪念图已保存到相册');
+      } else {
+        showToast('当前环境不支持保存，可先收入收藏');
+      }
+    } catch (e) {
+      showToast('图片未能保存，请重试');
     } finally {
       downloading = false;
       $('downloadButton').disabled = false;
-      $('downloadButton').textContent = '下载高清纪念图 ↓';
+      $('downloadButton').textContent = '保存高清纪念图 ↓';
     }
   }
 
   async function saveLantern() {
-    const design = { ...selection };
+    const design = Object.assign({}, selection);
     const signature = JSON.stringify(design);
     if (signature === lastSaved) return showToast('这盏花灯已经收藏了');
     $('saveButton').disabled = true;
@@ -245,7 +264,7 @@
       lastSaved = signature;
       $('count').textContent = collection.length;
       showToast('花灯已收入收藏');
-    } catch {
+    } catch (e) {
       showToast('本地收藏未能保存，可以先下载花灯图片');
     } finally {
       $('saveButton').disabled = false;
@@ -255,7 +274,7 @@
   function showCollection() {
     $('workshop').hidden = true;
     $('collection').hidden = false;
-    $('collectionGrid').replaceChildren();
+    clear($('collectionGrid'));
     if (!collection.length) {
       const message = document.createElement('p');
       message.textContent = '这里等着你的第一盏花灯。';
@@ -296,7 +315,7 @@
     return `拖动旋转 · ${zoom} · 点击${running ? '暂停转动' : '继续转动'}`;
   };
   hint.textContent = hintText(true);
-  coarse.addEventListener?.('change', () => { hint.textContent = hintText(studio.motionOn); });
+  if (coarse.addEventListener) coarse.addEventListener('change', () => { hint.textContent = hintText(studio.motionOn); });
   $('artwork3d').addEventListener('pointerdown', (e) => { downX = e.clientX; downY = e.clientY; });
   $('artwork3d').addEventListener('pointerup', (e) => {
     // 移动超过 5px 视为拖拽旋转，不触发切换

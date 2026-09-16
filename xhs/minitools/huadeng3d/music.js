@@ -70,7 +70,7 @@
         if (!timer) timer = window.setInterval(schedule, 100);
         schedule();
       }).catch(() => {});
-    } catch { /* 不支持音频时仍可正常制作花灯。 */ }
+    } catch (e) { /* 不支持音频时仍可正常制作花灯。 */ }
     finally { starting = false; }
   }
   ['pointerdown', 'keydown'].forEach(event => document.addEventListener(event, () => {
