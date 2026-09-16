@@ -11,13 +11,13 @@
   const PALETTE = {
     vermilion: { edge: '#571d17', mid: '#b84926', lit: '#ffc174', paper: '#b65535', ink: '#ffe1a0' },
     ivory:     { edge: '#726041', mid: '#c9ae77', lit: '#fff3c3', paper: '#dcca9e', ink: '#825a35' },
-    jade:      { edge: '#183d37', mid: '#497566', lit: '#d2d697', paper: '#648976', ink: '#eee0a6' },
-    rose:      { edge: '#55282b', mid: '#ac6764', lit: '#ffd4a0', paper: '#bd8684', ink: '#ffdda0' },
+    jade:      { edge: '#123f32', mid: '#237b55', lit: '#c9e6a8', paper: '#2e8b57', ink: '#fff0a8' },
+    rose:      { edge: '#67232d', mid: '#b94557', lit: '#ffd0b5', paper: '#c94a5e', ink: '#ffe2a8' },
     // 新增：符合传统花灯的纸色
     amber:     { edge: '#6b4413', mid: '#c98f2e', lit: '#ffe9a8', paper: '#d99a3d', ink: '#7a4a1e' }, // 明黄
     coral:     { edge: '#8a2f24', mid: '#d4604a', lit: '#ffc9a3', paper: '#c96a4a', ink: '#ffe4c4' }, // 橘红
-    indigo:    { edge: '#1b2a4a', mid: '#3c5580', lit: '#c9d8f2', paper: '#41598a', ink: '#dfe8f8' }, // 靛蓝
-    lilac:     { edge: '#4a3159', mid: '#8b6aa0', lit: '#f0defc', paper: '#9679ab', ink: '#f4e8fd' }  // 青莲
+    indigo:    { edge: '#172d4d', mid: '#28527e', lit: '#c5ddf4', paper: '#2e5d8c', ink: '#e7f0ff' }, // 石青
+    lilac:     { edge: '#4f183f', mid: '#7d235f', lit: '#f2bfdc', paper: '#8b2671', ink: '#ffe2f3' }  // 青莲
   };
 
   // 与 SVG 版一致：widthAt(t) 返回 t∈[0,1] 处的半宽（竹骨弧度）。
