@@ -1263,7 +1263,8 @@
     }
 
     _clampedPixelRatio() {
-      return Math.min(window.devicePixelRatio || 1, 2.25);
+      // 性能预算默认档：绘制缓冲 DPR 不超过 1.5，低端机由帧耗时监测进一步降到 1。
+      return Math.min(window.devicePixelRatio || 1, 1.5);
     }
 
     _showFallback() {
