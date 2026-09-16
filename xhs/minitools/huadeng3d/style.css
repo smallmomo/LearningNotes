@@ -283,7 +283,7 @@ button:focus, button:focus-visible, a:focus, a:focus-visible { outline: 2px soli
   }
   .option { scroll-snap-align: start; }
   .options::-webkit-scrollbar { display: none; }
-  .options.empty { flex: 0 0 auto; min-height: 0; background: none; box-shadow: none; -webkit-mask-image: none; mask-image: none; padding: 0; }
+  .options.empty { display: none; flex: 0 0 auto; min-height: 0; background: none; box-shadow: none; -webkit-mask-image: none; mask-image: none; padding: 0; }
   .option-scrollbar {
     position: relative; flex: 0 0 4px; height: 4px; margin: 3px 1px 8px;
     overflow: hidden; border-radius: 4px; background: rgba(207, 197, 179, .45);
