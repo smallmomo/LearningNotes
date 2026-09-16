@@ -748,10 +748,13 @@
       const thigh=oval([.4,.56,.19],[.68,-.91,side*.65],paper,-.37);
       outline(thigh);
       outline(oval([.43,.16,.26],[.48,-1.37,side*.64],paper,.06));
-      outline(oval([.23,.18,.27],[-.66,-1.36,side*.4],paper,-.12));
+      // 前腿上端嵌入胸腹，下端与脚掌重叠；双脚靠拢，避免悬空。
+      oval([.23,.43,.25],[-.57,-.97,side*.28],paper,-.12);
+      outline(oval([.28,.18,.28],[-.64,-1.36,side*.27],paper,-.08));
     });
-    oval([.65,.56,.53],[-.75,.8,0],paper,-.13);
-    oval([.28,.26,.4],[-1.14,.63,.015],paper,-.13);
+    const head=oval([.65,.56,.53],[-.75,.8,0],paper,-.13);
+    // 鼻口直接贴合头部曲面，不再叠加突出的球状口鼻。
+    const facePoint=(x,y,side)=>new THREE.Vector3(x,y,side*(Math.sqrt(Math.max(0,1-x*x-y*y))+.009)).applyMatrix4(head.matrix);
     // 耳朵有真实厚度，内耳贴合外耳曲面，避免旧版悬空粉色片。
     function ear(root, length, width, tilt) {
       const group=new THREE.Group(); group.position.set(...root); group.rotation.z=tilt;
@@ -781,14 +784,7 @@
     }
     ear([-.85,1.18,-.2],.68,.22,-.2);
     ear([-.57,1.17,.18],.74,.25,-.64);
-    // 经纬骨线精确贴合球面，两侧完整闭合。
-    [-.8,-.6,-.4,-.2,0,.2,.4,.6,.8].forEach(y=>{
-      const r=Math.sqrt(1-y*y);
-      rib(Array.from({length:97},(_,i)=>{
-        const a=i/96*Math.PI*2;
-        return new THREE.Vector3(r*Math.cos(a)*1.004,y*1.004,r*Math.sin(a)*1.004).applyMatrix4(body.matrix);
-      }));
-    });
+    // 灯面只保留纵向骨线。
     for(let k=0;k<7;k++) {
       const a=k*Math.PI/7;
       rib(Array.from({length:97},(_,i)=>{
@@ -799,9 +795,14 @@
     [-1,1].forEach(side=>{
       oval([.12,.135,.04],[-.91,.88,side*.507],dark,0,true);
       oval([.035,.036,.012],[-.94,.926,side*.545],gleam,0,true);
-      oval([.043,.031,.022],[-1.367,.653,side*.17],pink,0,true);
+      const noseGeometry=new THREE.BufferGeometry().setFromPoints([
+        facePoint(-.965,-.08,side),facePoint(-.9,-.07,side),facePoint(-.932,-.145,side)
+      ]);
+      noseGeometry.setIndex([0,1,2]);noseGeometry.computeVertexNormals();
+      const nose=new THREE.Mesh(noseGeometry,pink);nose.userData.decoration=true;g.add(nose);
       const mouth=new THREE.Line(new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(-1.36,.632,side*.18),new THREE.Vector3(-1.31,.57,side*.23),new THREE.Vector3(-1.25,.58,side*.28)
+        facePoint(-.932,-.145,side),facePoint(-.922,-.205,side),
+        facePoint(-.87,-.25,side),facePoint(-.82,-.235,side)
       ]),new THREE.LineBasicMaterial({color:0x97583f}));
       mouth.userData.decoration=true;g.add(mouth);
     });
