@@ -8,6 +8,7 @@
   let lastSaved = '';
   let toastTimer;
   let downloading = false;
+  let palacePatternSuggested = false;
   let collection = readCollection();
   const studio = new LanternStudio($('artwork3d'));
 
@@ -15,7 +16,7 @@
     {
       label: '扎骨', title: '扎一副灯骨', description: '选一种团圆的形状。弯竹成弧，细细撑起一盏灯。',
       caption: '从一副竹骨开始', subtitle: '细竹弯成弧，把团圆的形状留住。', key: 'frame', next: '糊上灯纸',
-      choices: [['round', '团圆灯', '圆鼓饱满', '◯'], ['tall', '长圆灯', '修长雅致', '⬭'], ['barrel', '桶子灯', '憨直敦实', '⬢'], ['globe', '圆球灯', '饱满团圆', '●'], ['oval', '筒子灯', '清瘦修长', '▮'], ['melon', '南瓜灯', '瓣瓣分明', '❋'], ['hex', '棱角灯', '六面生光', '⬡'], ['lotus', '莲花灯', '瓣瓣舒展', '✿'], ['rabbit', '兔子灯', '双耳竖立', '🐇']]
+      choices: [['round', '团圆灯', '圆鼓饱满', '◯'], ['tall', '长圆灯', '修长雅致', '⬭'], ['barrel', '桶子灯', '憨直敦实', '⬢'], ['globe', '圆球灯', '饱满团圆', '●'], ['oval', '筒子灯', '清瘦修长', '▮'], ['melon', '南瓜灯', '瓣瓣分明', '❋'], ['hex', '棱角灯', '六面生光', '⬡'], ['palace', '六角宫灯', '飞檐垂穗', '⬡'], ['lotus', '莲花灯', '瓣瓣舒展', '✿'], ['rabbit', '兔子灯', '双耳竖立', '🐇'], ['sittingRabbit', '玉兔灯', '侧坐舒耳', '🐇']]
     },
     {
       label: '糊纸', title: '蒙一层柔软灯纸', description: '纸面覆上竹骨，细褶留在灯身。挑一个喜欢的颜色。',
@@ -25,7 +26,7 @@
     {
       label: '描花', title: '描一点心意', description: '让细细的纹样落在纸上。也可以留下素面，欣赏纸的肌理。',
       caption: '一笔一画，都是心意', subtitle: '疏枝、流云与祝愿，轻轻落在灯纸上。', key: 'pattern', next: '系上流苏',
-      choices: [['plum', '梅花', '疏枝报春', '❀'], ['bamboo', '翠竹', '竹报平安', '🎋'], ['orchid', '幽兰', '空谷吐芳', '🌿'], ['cloud', '流云', '云卷舒心', '≋'], ['fish', '双鱼', '年年有余', '🐟'], ['willow', '雪柳', '柳丝依依', '❄'], ['fortune', '纳福', '福气常在', '福'], ['plain', '素面', '留一分空白', '·']]
+      choices: [['plum', '梅花', '疏枝报春', '❀'], ['baoxiang', '宝相花', '宫灯团花', '✾'], ['bamboo', '翠竹', '竹报平安', '🎋'], ['orchid', '幽兰', '空谷吐芳', '🌿'], ['cloud', '流云', '云卷舒心', '≋'], ['fish', '双鱼', '年年有余', '🐟'], ['willow', '雪柳', '柳丝依依', '❄'], ['fortune', '纳福', '福气常在', '福'], ['plain', '素面', '留一分空白', '·']]
     },
     {
       label: '系穗', title: '系一束丝线流苏', description: '一枚小结，一束丝穗。灯下的风，也有了形状。',
@@ -72,6 +73,7 @@
 
   function frameIcon(frame) {
     const silhouettes = {
+      palace: '<path d="M9 22Q22 19 30 10Q38 19 51 22L48 17M9 22L12 17M15 23H45V49H15ZM23 23V49M37 23V49M13 50H47L30 58Z M7 23V37M53 23V37M5 40V50M9 40V50M51 40V50M55 40V50"/><circle cx="30" cy="36" r="5"/><path d="M26 10H34M30 5V10"/>',
       round: '<path d="M23 10C6 17 6 45 23 52H37C54 45 54 17 37 10Z"/><path d="M26 10C17 22 17 41 26 52M34 10C43 22 43 41 34 52"/>',
       tall: '<path d="M25 7C12 18 12 47 25 56H35C48 47 48 18 35 7Z"/><path d="M30 7V56"/>',
       barrel: '<path d="M16 12Q10 31 16 51H44Q50 31 44 12Z"/><path d="M22 13V50M38 13V50"/>',
@@ -80,7 +82,8 @@
       melon: '<ellipse cx="30" cy="32" rx="24" ry="18"/><ellipse cx="30" cy="32" rx="15" ry="18"/><ellipse cx="30" cy="32" rx="6" ry="18"/>',
       hex: '<path d="M15 13L30 8 45 13 47 49 30 55 13 49Z"/><path d="M30 8V55M15 13H45M13 49H47"/>',
       lotus: '<path d="M30 49Q5 45 6 29Q22 29 30 49Q55 45 54 29Q38 29 30 49Z"/><path d="M30 49Q10 28 18 18Q29 25 30 49Q50 28 42 18Q31 25 30 49Z"/><path d="M30 48Q16 29 30 12Q44 29 30 48Z"/>',
-      rabbit: '<ellipse cx="30" cy="43" rx="13" ry="14"/><ellipse cx="24" cy="14" rx="4" ry="12" transform="rotate(-12 24 14)"/><ellipse cx="37" cy="13" rx="4" ry="12" transform="rotate(8 37 13)"/><ellipse cx="30" cy="29" rx="13" ry="11"/><path d="M25 28h.1M35 28h.1" stroke-width="3"/>'
+      rabbit: '<ellipse cx="30" cy="43" rx="13" ry="14"/><ellipse cx="24" cy="14" rx="4" ry="12" transform="rotate(-12 24 14)"/><ellipse cx="37" cy="13" rx="4" ry="12" transform="rotate(8 37 13)"/><ellipse cx="30" cy="29" rx="13" ry="11"/><path d="M25 28h.1M35 28h.1" stroke-width="3"/>',
+      sittingRabbit: '<ellipse cx="33" cy="43" rx="13" ry="14"/><ellipse cx="20" cy="25" rx="10" ry="9"/><path d="M24 18Q31 2 46 5Q44 17 27 22M29 23Q47 17 55 30Q39 35 29 26M20 34Q15 45 23 52M21 54H42M25 35L39 39"/><circle cx="20" cy="24" r="1.8"/><circle cx="47" cy="46" r="4"/>'
     };
     return `<svg viewBox="0 0 60 68" aria-hidden="true" fill="#d4b58622" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">${silhouettes[frame] || silhouettes.round}<path d="M30 57v7M27 64h6"/></svg>`;
   }
@@ -139,6 +142,10 @@
       button.onclick = () => {
         if (selection[current.key] === value) return;
         selection[current.key] = value;
+        if (current.key === 'frame' && value === 'palace' && !palacePatternSuggested) {
+          selection.pattern = 'baoxiang';
+          palacePatternSuggested = true;
+        }
         for (const [btn, val] of optionButtons) {
           const selected = val === value;
           btn.classList.toggle('selected', selected);

@@ -30,7 +30,9 @@
     melon:  { height: 246, widthAt: t => 40 + 126 * Math.pow(Math.sin(Math.PI * t), .6) },
     hex:    { height: 280, widthAt: t => 102 + 12 * Math.sin(Math.PI * t), faceted: true, sides: 6 },
     lotus:  { kind: 'lotus',  height: 230, widthAt: (t) => 70 + 150 * Math.pow(Math.sin(Math.PI * t), .6) },
-    rabbit: { kind: 'rabbit', height: 230, widthAt: (t) => 60 + 130 * Math.pow(Math.sin(Math.PI * t), .7) }
+    rabbit: { kind: 'rabbit', height: 230, widthAt: (t) => 60 + 130 * Math.pow(Math.sin(Math.PI * t), .7) },
+    sittingRabbit: { kind: 'rabbit', variant: 'sitting', height: 230, widthAt: (t) => 60 + 130 * Math.pow(Math.sin(Math.PI * t), .7) },
+    palace: { kind: 'palace', height: 280, widthAt: () => 80 }
   };
 
   const TASSEL = {
@@ -170,7 +172,7 @@
     return mesh;
   }
 
-  function motifTexture(pattern, p) {
+  function motifTexture(pattern, p, aspect = 1) {
     const c = document.createElement('canvas');
     c.width = c.height = 512;
     const x = c.getContext('2d');
@@ -194,6 +196,30 @@
     x.lineJoin = 'round';
     if (pattern === 'plain') {
       // 素面
+    } else if (pattern === 'baoxiang') {
+      // 团花以灯窗中心为轴；补偿狭长窗面的贴图比例，让花瓣保持圆润。
+      x.save(); x.translate(256,244); x.scale(1,aspect);
+      for(let i=0;i<8;i++) {
+        x.save(); x.rotate(i*Math.PI/4);
+        x.beginPath(); x.moveTo(0,-23);
+        x.bezierCurveTo(-43,-42,-38,-78,0,-109);
+        x.bezierCurveTo(38,-78,43,-42,0,-23);
+        x.globalAlpha=.26; x.fill(); x.globalAlpha=.95; x.lineWidth=3.2; x.stroke();
+        x.beginPath(); x.moveTo(0,-34); x.quadraticCurveTo(-21,-61,0,-89);
+        x.quadraticCurveTo(21,-61,0,-34); x.globalAlpha=.55; x.lineWidth=1.6; x.stroke();
+        x.restore();
+      }
+      x.globalAlpha=.9; x.lineWidth=3;
+      x.beginPath(); x.arc(0,0,23,0,Math.PI*2); x.stroke();
+      x.globalAlpha=.5; x.beginPath(); x.arc(0,0,15,0,Math.PI*2); x.fill();
+      x.globalAlpha=1; x.beginPath(); x.arc(0,0,6,0,Math.PI*2); x.fill();
+      // 外圈四枚小叶点缀，保留团花周围的留白。
+      for(let i=0;i<4;i++) {
+        x.save(); x.rotate(Math.PI/4+i*Math.PI/2);
+        x.beginPath(); x.moveTo(0,-118); x.quadraticCurveTo(-12,-133,0,-146);
+        x.quadraticCurveTo(12,-133,0,-118); x.globalAlpha=.7; x.fill(); x.restore();
+      }
+      x.restore();
     } else if (pattern === 'fortune') {
       x.font = 'bold 240px "SimSun", serif';
       x.textAlign = 'center';
@@ -453,9 +479,9 @@
     return grp;
   }
 
-  function paperMaterial(p, lit, pattern) {
+  function paperMaterial(p, lit, pattern, aspect = 1) {
     return new THREE.MeshStandardMaterial({
-      color: 0xffffff, map: motifTexture(pattern, p), roughness: .96,
+      color: 0xffffff, map: motifTexture(pattern, p, aspect), roughness: .96,
       metalness: 0, side: THREE.DoubleSide,
       emissive: p.paper, emissiveIntensity: lit ? .38 : 0
     });
@@ -553,11 +579,122 @@
     return g;
   }
 
+  // 侧身坐兔：正面呈侧影，双面五官和有厚度的耳片支持环绕观看。
+  function buildSittingRabbit(p, lit, showMotif, pattern) {
+    const g = new THREE.Group();
+    const paper = paperMaterial(p, lit, 'plain');
+    const painted = paperMaterial(p, lit, showMotif ? pattern : 'plain');
+    const pink = new THREE.MeshStandardMaterial({ color: 0xe9a18b, roughness: .85, side: THREE.DoubleSide });
+    const red = new THREE.MeshStandardMaterial({ color: 0xa52823, roughness: .65, side: THREE.DoubleSide });
+    const gold = new THREE.MeshStandardMaterial({ color: METAL, metalness: .45, roughness: .5 });
+    const dark = new THREE.MeshStandardMaterial({ color: 0x461b12, roughness: .28 });
+    const gleam = new THREE.MeshBasicMaterial({ color: 0xfff3ce });
+    function oval(scale, position, material, tilt = 0, decoration = false) {
+      const mesh = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), material);
+      mesh.scale.set(...scale); mesh.position.set(...position); mesh.rotation.z = tilt;
+      mesh.userData.decoration = decoration;
+      if (material === painted) {
+        const pos = mesh.geometry.attributes.position, uv = mesh.geometry.attributes.uv;
+        for (let i = 0; i < uv.count; i++) uv.setXY(i, pos.getX(i) * .5 + .5, pos.getY(i) * .5 + .5);
+      }
+      g.add(mesh); return mesh;
+    }
+    const ribMaterial = new THREE.LineBasicMaterial({color:0xbb873b, transparent:true, opacity:.8});
+    function rib(points) {
+      const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(points),ribMaterial);
+      line.userData.rabbitRib = true; g.add(line);
+    }
+    function framedOval(scale, position, material, tilt = 0) {
+      const mesh = oval(scale,position,material,tilt);
+      mesh.updateMatrix();
+      // 稀疏经线勾勒纸灯，而非玩偶表面。
+      [0,Math.PI/3,Math.PI*2/3].forEach(a => {
+        rib(Array.from({length:81},(_,i) => {
+          const t=i/80*Math.PI*2;
+          return new THREE.Vector3(Math.cos(t)*Math.cos(a),Math.sin(t),Math.cos(t)*Math.sin(a)).applyMatrix4(mesh.matrix);
+        }));
+      });
+      return mesh;
+    }
+    oval([.26,.28,.3], [1.03,-.75,-.1], paper);
+    framedOval([.94,.99,.65], [.15,-.45,0], painted, .16);
+    framedOval([.42,.7,.53], [-.57,-.36,.025], paper, -.08);
+    framedOval([.44,.17,.49], [.37,-1.35,.1], paper);
+    framedOval([.29,.16,.44], [-.63,-1.37,.12], paper);
+    [-1,1].forEach(side => framedOval([.17,.47,.115], [-.64,-.8,side*.49], paper,.24));
+    framedOval([.69,.65,.55], [-.64,.98,0], paper,-.1);
+    // 口鼻融入头部，只保留微微向前的轮廓。
+    oval([.19,.2,.35], [-1.18,.87,.015], paper);
+    // 耳片从同一耳根展开，一只上扬、一只向后平展，尖端收束。
+    function ear(root, tip, width, bend) {
+      const dx=tip[0]-root[0], dy=tip[1]-root[1], length=Math.hypot(dx,dy);
+      const nx=-dy/length, ny=dx/length;
+      const point=(t,u,side,inner=false) => {
+        if(inner) { t=.08+t*.85; u*=.76; }
+        const w=width*Math.pow(Math.sin(Math.PI*t),.85);
+        const arc=bend*Math.sin(Math.PI*t);
+        return new THREE.Vector3(root[0]+dx*t+nx*(arc+u*w),root[1]+dy*t+ny*(arc+u*w),
+          root[2]+side*(.13*Math.sin(Math.PI*t)*(1-u*u)+(inner?.008:0)));
+      };
+      [-1,1].forEach(side => {
+        [false,true].forEach(inner => {
+          const positions=[],uv=[],indices=[];
+          for(let i=0;i<=32;i++) for(let j=0;j<=12;j++) {
+            const v=point(i/32,j/6-1,side,inner); positions.push(v.x,v.y,v.z); uv.push(j/12,i/32);
+            if(i<32 && j<12) { const a=i*13+j; indices.push(a,a+13,a+1,a+1,a+13,a+14); }
+          }
+          const geometry=new THREE.BufferGeometry();
+          geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+          geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
+          geometry.setIndex(indices); geometry.computeVertexNormals();
+          const mesh=new THREE.Mesh(geometry,inner?pink:paper); mesh.userData.decoration=true; g.add(mesh);
+        });
+      });
+      [-1,1].forEach(u => rib(Array.from({length:49},(_,i)=>point(i/48,u,1))));
+    }
+    ear([-.36,1.5,-.09],[.98,2.44,-.09],.32,.12);
+    ear([-.3,1.42,.025],[1.82,.67,.025],.39,.12);
+    [-1,1].forEach(side => {
+      oval([.145,.17,.035], [-.65,1.06,side*.548], gold, 0, true);
+      oval([.112,.127,.045], [-.66,1.065,side*.575], dark, 0, true);
+      oval([.034,.039,.018], [-.695,1.11,side*.616], gleam, 0, true);
+      oval([.095,.065,.025], [-1.3,1.0,side*.3], pink, -.3, true);
+      const mouth = new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(-1.28,.95,side*.34), new THREE.Vector3(-1.22,.86,side*.39), new THREE.Vector3(-1.1,.85,side*.43)
+      ]), new THREE.LineBasicMaterial({color:0x9b5b3f}));
+      mouth.userData.decoration = true; g.add(mouth);
+      // 颈部绸结，双面均有结饰。
+      oval([.31,.17,.085], [-.66,.39,side*.52], red, -.45, true);
+      oval([.34,.17,.085], [-.13,.4,side*.52], red, .4, true);
+      oval([.145,.145,.11], [-.4,.37,side*.6], gold, 0, true);
+      for(let i=0;i<5;i++) {
+        const a=i/5*Math.PI*2;
+        oval([.062,.076,.035],[-.4+Math.cos(a)*.13,.37+Math.sin(a)*.13,side*.69],gold,a,true);
+      }
+      oval([.058,.065,.035],[-.4,.37,side*.73],red,0,true);
+      oval([.065,.078,.06],[-.4,.04,side*.64],red,0,true);
+      const pendant=buildTassel({dark:0x99241c,light:0xe9653d},1.1);
+      pendant.scale.setScalar(.5); pendant.position.set(-.4,-.02,side*.66);
+      pendant.traverse(o=>{o.userData.decoration=true;}); g.add(pendant);
+      const ribbon = new THREE.Shape();
+      ribbon.moveTo(-.3,.33); ribbon.bezierCurveTo(.24,.3,.65,.14,.96,-.3);
+      ribbon.lineTo(.74,-.23); ribbon.lineTo(.69,-.47);
+      ribbon.bezierCurveTo(.43,-.02,.04,.1,-.35,.17);
+      const mesh = new THREE.Mesh(new THREE.ShapeGeometry(ribbon,24),red);
+      mesh.position.z=side*.54; mesh.userData.decoration=true; g.add(mesh);
+    });
+    return g;
+  }
+
   function surfaceFrame(body) {
     const g = new THREE.Group();
     const mat = new THREE.LineBasicMaterial({ color: 0xd3b77f, transparent: true, opacity: .78 });
     body.updateMatrixWorld(true);
     body.traverse(o => {
+      if (o.isLine && o.userData.rabbitRib) {
+        const line=o.clone(); line.geometry=o.geometry.clone(); line.material=mat;
+        line.applyMatrix4(o.matrixWorld); g.add(line); return;
+      }
       if (!o.isMesh || o.userData.decoration) return;
       // Sphere longitude/latitude lines avoid a dense triangulated wire mesh.
       if (o.geometry.type === 'SphereGeometry') {
@@ -619,6 +756,80 @@
     return g;
   }
 
+  function buildPalace(p, stage, selection) {
+    const g = new THREE.Group();
+    const brass = new THREE.MeshStandardMaterial({color:0xc39446,metalness:.65,roughness:.35});
+    const enamel = new THREE.MeshStandardMaterial({color:p.edge,metalness:.25,roughness:.5});
+    const paper = paperMaterial(p,stage >= 4,stage >= 2 ? selection.pattern : 'plain',1.12/2.15);
+    const tube = (points,radius=.025) => {
+      const curve=new THREE.CatmullRomCurve3(points.map(v=>new THREE.Vector3(...v)));
+      const mesh=new THREE.Mesh(new THREE.TubeGeometry(curve,36,radius,8,false),brass); g.add(mesh);
+    };
+    const ring = (radius,y,thickness) => {
+      const points=Array.from({length:7},(_,i)=>{
+        const a=i*Math.PI/3+Math.PI/6; return [Math.sin(a)*radius,y,Math.cos(a)*radius];
+      });
+      // 六边框采用直边，不把折角平滑成圆形。
+      for(let i=0;i<6;i++) tube([points[i],points[i+1]],thickness);
+    };
+    const tier = (rt,rb,height,y,material) => {
+      const mesh=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,height,6),material);
+      mesh.rotation.y=Math.PI/6; mesh.position.y=y; g.add(mesh);
+    };
+    const ornament = (cx,cy,cz,scale=1) => {
+      const group=new THREE.Group(); group.position.set(cx,cy,cz); group.scale.setScalar(scale);
+      for(let i=0;i<5;i++) {
+        const a=i*Math.PI*2/5;
+        const petal=new THREE.Mesh(new THREE.TorusGeometry(.07,.015,6,16),brass);
+        petal.position.set(Math.cos(a)*.09,Math.sin(a)*.09,0); group.add(petal);
+      }
+      const bead=new THREE.Mesh(new THREE.SphereGeometry(.045,12,8),brass); group.add(bead); g.add(group);
+    };
+    for(let k=0;k<6;k++) {
+      const a=k*Math.PI/3;
+      const frame=new THREE.Group(); frame.rotation.y=a;
+      if(stage>0) {
+        const panel=new THREE.Mesh(new THREE.PlaneGeometry(1.12,2.15),paper);
+        panel.position.set(0,0,1.15*Math.cos(Math.PI/6)); frame.add(panel);
+      }
+      // 一窗一框，每个面独立贴图，避免纹样横跨折角。
+      [-.53,.53].forEach(x=>{
+        const post=new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,2.23,10),brass);
+        post.position.set(x,0,1.01); frame.add(post);
+      });
+      if(stage>=2 && selection.pattern === 'baoxiang') {
+        const medallion=new THREE.Mesh(new THREE.TorusGeometry(.31,.019,8,48),brass);
+        medallion.position.set(0,.05,1.018); frame.add(medallion);
+      }
+      g.add(frame);
+      const angle=a+Math.PI/6;
+      const sx=Math.sin(angle), sz=Math.cos(angle);
+      tube([[sx*1.15,-1.15,sz*1.15],[sx*1.15,1.15,sz*1.15]],.045);
+      tube([[sx*.32,1.77,sz*.32],[sx*.78,1.43,sz*.78],[sx*1.34,1.29,sz*1.34],[sx*1.68,1.49,sz*1.68],[sx*1.7,1.61,sz*1.7]],.037);
+      tube([[sx*1.16,-1.2,sz*1.16],[sx*.8,-1.45,sz*.8],[sx*.28,-1.65,sz*.28]],.028);
+    }
+    ring(1.19,1.13,.046); ring(1.23,-1.12,.046); ring(1.31,-1.22,.028);
+    // 层叠檐顶与收拢底座。
+    if(stage>0) {
+      tier(.34,1.39,.42,1.49,enamel);
+      tier(1.22,.38,.4,-1.38,enamel);
+    }
+    ring(1.39,1.28,.035); ring(.35,1.7,.025); ring(.39,-1.58,.025);
+    const crown=new THREE.Mesh(new THREE.SphereGeometry(.28,24,16),brass);
+    crown.position.y=1.77; crown.scale.y=.65; g.add(crown);
+    const base=new THREE.Mesh(new THREE.SphereGeometry(.25,24,16),brass);
+    base.position.y=-1.68; base.scale.y=.65; g.add(base);
+    [-1,1].forEach(side=>{
+      tube([[side*1.52,1.44,0],[side*1.52,.92,0]],.015);
+      ornament(side*1.52,.75,0,1.1);
+      if(stage>=3 && selection.tassel !== 'none') {
+        const tassel=buildTassel(TASSEL[selection.tassel] || TASSEL.red,1.6);
+        tassel.scale.setScalar(.62); tassel.position.set(side*1.52,.52,0); g.add(tassel);
+      }
+    });
+    return g;
+  }
+
   function buildLantern(selection, stage) {
     const shape = SHAPES[selection.frame] || SHAPES.round;
     const p = PALETTE[selection.paper] || PALETTE.vermilion;
@@ -628,10 +839,14 @@
     const metalMat = new THREE.MeshStandardMaterial({ color: METAL, roughness: 0.4, metalness: 0.6 });
 
     const special = !!shape.kind;
-    const top = shape.kind === 'rabbit' ? 3.42 : shape.kind === 'lotus' ? 1.6 : .5 * shape.height * SCALE;
-    const bottom = shape.kind === 'rabbit' ? -1.66 : shape.kind === 'lotus' ? -1.05 : -.5 * shape.height * SCALE;
-    if (special) {
-      const body = shape.kind === 'lotus' ? buildLotus(p, lit, showMotif, selection.pattern) : buildRabbit(p, lit, showMotif, selection.pattern);
+    const top = shape.kind === 'palace' ? 1.98 : shape.kind === 'rabbit' ? 3.42 : shape.kind === 'lotus' ? 1.6 : .5 * shape.height * SCALE;
+    const bottom = shape.kind === 'palace' ? -1.85 : shape.kind === 'rabbit' ? -1.66 : shape.kind === 'lotus' ? -1.05 : -.5 * shape.height * SCALE;
+    if (shape.kind === 'palace') {
+      g.add(buildPalace(p,stage,selection));
+    } else if (special) {
+      const body = shape.kind === 'lotus' ? buildLotus(p, lit, showMotif, selection.pattern)
+        : shape.variant === 'sitting' ? buildSittingRabbit(p, lit, showMotif, selection.pattern)
+        : buildRabbit(p, lit, showMotif, selection.pattern);
       if (stage === 0) {
         if (shape.kind === 'rabbit') { g.add(surfaceFrame(body)); disposeObject(body); }
         else {
@@ -657,7 +872,7 @@
     g.add(topLoop);
     if (shape.kind === 'rabbit') {
       g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(0, 1.78, .35), new THREE.Vector3(0, top + .08, 0)
+        new THREE.Vector3(shape.variant === 'sitting' ? -.35 : 0, 1.78, shape.variant === 'sitting' ? 0 : .35), new THREE.Vector3(0, top + .08, 0)
       ]), new THREE.LineBasicMaterial({ color: METAL })));
     }
     if (shape.kind === 'lotus') {
