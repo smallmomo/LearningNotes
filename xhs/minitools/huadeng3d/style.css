@@ -191,71 +191,115 @@ button:focus, button:focus-visible, a:focus, a:focus-visible { outline: 2px soli
 
 /* ---------- 移动端（小红书内为主场景） ---------- */
 @media (max-width: 760px) {
-  /* 一屏式布局：整页不滚，唯一滚动在选项框里 */
-  html, body { height: 100%; overflow: hidden; }
-  /* 顶部固定留白 + 安全区：真机容器里 env() 常为 0，固定留白保证「花灯手作」不贴顶 */
-  .studio { padding: calc(14px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px))) 0 0; height: 100%; height: 100dvh; display: flex; flex-direction: column; }
-  body::before { display: none; }
-  .header { height: 58px; padding: 0 18px; flex: 0 0 auto; }
-  .brand { font-size: 18px; letter-spacing: 2px; gap: 8px; }
-  .brand small { display: none; }
-  .seal { font-size: 15px; min-width: 26px; padding: 2px 4px; }
-  .workspace { display: flex; flex-direction: column; border: 0; box-shadow: none; min-height: 0; flex: 1; background: transparent; }
-  .stage { flex: 0 0 40vh; flex: 0 0 clamp(250px, 40svh, 390px); min-height: 0; margin: 0 10px; border-radius: 4px; }
-  .stage-heading { top: 18px; left: 24px; right: 24px; font-size: 9px; }
-  .artwork { height: auto; flex: 1 1 0; margin: 0; }
-  .stage-caption { margin: 0 16px 38px; max-width: calc(100% - 32px); }
-  .stage-hint { bottom: 16px; font-size: 9px; letter-spacing: .5px; }
-  .stage-caption h1 { font-size: 16px; margin-bottom: 0; letter-spacing: 3px; }
-  .stage-caption p { display: none; }
-  .stage::after { top: 12px; right: 12px; bottom: 12px; left: 12px; }
-  .stage::before { top: 6px; right: 6px; bottom: 6px; left: 6px; }
-  .workbench { padding: 0 20px; background: transparent; flex: 1; display: flex; flex-direction: column; min-height: 0; }
-  .intro { display: none; }
-  .steps { margin: 14px 0 16px; flex: 0 0 auto; }
-  .steps button { flex-direction: row; justify-content: center; gap: 5px; padding-bottom: 12px; font-size: 12px; letter-spacing: 0; min-height: 38px; }
-  .steps b { width: 22px; height: 22px; font-size: 10px; flex-shrink: 0; }
-  .step-heading h3 { font-size: 20px; }
-  .step-description { font-size: 11px; min-height: 0; margin: 8px 0 12px; }
-  .step-content { flex: 1; display: flex; flex-direction: column; min-height: 0; }
-  /* 选项行去框：未选时安静透明，选中态自己「发光」——状态在选项上，不在容器上 */
-  .option { min-height: 62px; padding: 9px 22px 9px 10px; gap: 8px; border-color: transparent; background: transparent; box-shadow: none; }
-  .option:hover { background: rgba(255, 252, 244, .5); border-color: transparent; }
-  .option.selected { border-color: var(--accent); background: var(--accent-wash); box-shadow: inset 0 0 0 1px rgba(145, 84, 62, .12); }
-  /* 滚动区：与卡纸同色的实底隔开上下静态内容（无框线，不显“框”），渐隐边缘提示可滚动 */
-  .options {
-    gap: 6px; max-height: none; flex: 1 1 auto; min-height: 0;
-    padding: 6px; margin: 0;
-    background: var(--card);
-    border-radius: 8px;
-    box-shadow: 0 0 0 1px var(--line);
-    -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
-    mask-image: linear-gradient(180deg, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
+  :root {
+    --paper: #f9f4dc;
+    --card: #fffdf7;
+    --accent: #8e443d;
+    --accent-deep: #71332e;
+    --line: #e2dccf;
+    --line-strong: #cfc5b3;
   }
+  /* 手机端采用「预览 + 当前步骤 + 底部操作」三层结构。 */
+  html, body { height: 100%; overflow: hidden; }
+  .studio {
+    padding: calc(36px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px))) 0 0;
+    height: 100%; height: 100dvh; display: flex; flex-direction: column;
+  }
+  body::before { display: none; }
+  .header { height: 52px; padding: 0 16px; flex: 0 0 auto; }
+  .brand { font-size: 17px; letter-spacing: 1.5px; gap: 8px; }
+  .brand small { display: none; }
+  .seal { font-size: 14px; min-width: 28px; height: 28px; padding: 2px 4px; border-radius: 6px; }
+  #collectionButton {
+    min-height: 40px; padding: 7px 10px; border: 1px solid var(--line);
+    border-radius: 20px; background: rgba(255, 253, 247, .72); color: #68675f;
+  }
+  #count { margin-left: 4px; padding: 1px 6px; background: #fff; }
+  .workspace { display: flex; flex-direction: column; border: 0; box-shadow: none; min-height: 0; flex: 1; background: transparent; }
+  .stage {
+    flex: 0 0 clamp(235px, 34svh, 310px); min-height: 0; margin: 0 12px;
+    border-radius: 16px; box-shadow: 0 14px 34px -24px rgba(10, 31, 31, .75);
+  }
+  .stage-heading { top: 14px; left: 18px; right: 18px; font-size: 8px; letter-spacing: 1.6px; opacity: .82; }
+  .artwork { position: absolute; inset: 0; height: 100%; margin: 0; }
+  .stage-caption { position: absolute; left: 16px; right: 16px; bottom: 18px; margin: 0; max-width: none; }
+  .stage-hint { display: none; }
+  .stage-caption h1 { font-size: 15px; margin: 0; letter-spacing: 2px; text-shadow: 0 1px 8px rgba(0, 0, 0, .3); }
+  .stage-caption p { display: none; }
+  .stage::after { top: 8px; right: 8px; bottom: 8px; left: 8px; border-color: rgba(213, 195, 147, .12); border-radius: 11px; }
+  .stage::before { display: none; }
+  .stage-vignette { background: radial-gradient(105% 90% at 50% 42%, transparent 58%, rgba(5, 13, 16, .42) 100%); }
+  .workbench {
+    padding: 0 14px; margin-top: 10px; background: rgba(255, 253, 247, .76);
+    border-radius: 20px 20px 0 0; box-shadow: 0 -10px 28px -28px rgba(67, 54, 36, .7);
+    flex: 1; display: flex; flex-direction: column; min-height: 0;
+  }
+  .intro { display: none; }
+  .steps {
+    justify-content: center; align-items: center; gap: 6px; margin: 0 0 10px;
+    padding: 8px 0 6px; border-bottom: 0; flex: 0 0 auto;
+  }
+  .steps button {
+    flex: 0 0 44px; width: 44px; min-height: 44px; padding: 0;
+    flex-direction: row; justify-content: center; gap: 5px; border-radius: 22px;
+    background: #f0ece3; color: #858176; font-size: 11px; letter-spacing: 0;
+  }
+  .steps button span { display: none; }
+  .steps button.active { flex-basis: auto; width: auto; padding: 0 12px; color: #fff8ed; background: var(--accent); }
+  .steps button.active span { display: inline; }
+  .steps button::after { display: none; }
+  .steps b { width: auto; height: auto; border: 0; border-radius: 0; font-size: 10px; flex-shrink: 0; }
+  .steps button.active b { color: inherit; background: transparent; border: 0; }
+  .steps button.done b { border: 0; color: var(--accent); background: transparent; }
+  .steps button > * + * { margin-top: 0; margin-left: 5px; }
+  .supports-flex-gap .steps button > * + * { margin-left: 0; }
+  .step-heading { min-height: 28px; }
+  .step-heading span { display: none; }
+  .step-heading h3 { font-family: var(--sans); font-size: 18px; font-weight: 600; letter-spacing: .5px; }
+  .step-description { color: #7c796f; font-size: 11px; line-height: 1.65; min-height: 0; margin: 4px 0 10px; }
+  .step-content { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  .option {
+    min-height: 58px; padding: 8px 22px 8px 10px; gap: 8px;
+    border-color: var(--line); border-radius: 12px; background: rgba(255, 255, 255, .68);
+    box-shadow: 0 5px 14px -14px rgba(65, 50, 34, .55);
+  }
+  .option:hover { background: rgba(255, 255, 255, .86); border-color: var(--line-strong); }
+  .option.selected { border-color: var(--accent); background: rgba(142, 68, 61, .07); box-shadow: inset 0 0 0 1px rgba(142, 68, 61, .09); }
+  .option.selected::after { right: 10px; top: 10px; }
+  .option .sample { flex-basis: 30px; width: 30px; height: 30px; }
+  .option .frame-sample { flex-basis: 36px; width: 36px; height: 40px; }
+  .frame-sample svg { width: 36px; height: 40px; }
+  .option strong { font-size: 13px; }
+  .option small { margin-top: 3px; font-size: 9px; }
+  .options {
+    gap: 8px; max-height: none; flex: 1 1 auto; min-height: 0;
+    padding: 1px 1px 10px; margin: 0; background: transparent; border-radius: 0; box-shadow: none;
+    -webkit-mask-image: none; mask-image: none; scrollbar-width: none;
+  }
+  .options::-webkit-scrollbar { display: none; }
   .options.empty { flex: 0 0 auto; background: none; box-shadow: none; -webkit-mask-image: none; mask-image: none; padding: 0; }
   .wish-fields { flex: 1; }
-  /* 操作区固定在工作台底部，不再吸底 */
   .workbench-footer {
-    flex: 0 0 auto; margin: 12px -20px 0;
-    padding: 10px 20px calc(10px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));
-    background: rgba(246, 242, 232, .95);
-    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
-    border-top: 1px solid var(--line);
+    flex: 0 0 auto; gap: 10px; margin: 0 -14px;
+    padding: 10px 14px calc(10px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));
+    background: rgba(249, 244, 220, .94); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(207, 197, 179, .72); box-shadow: 0 -10px 24px -24px rgba(50, 39, 26, .8);
   }
-  /* 「下一步」不再通栏，宽度贴合文字，与前几步一致 */
-  .workbench-footer .primary { flex: 0 0 auto; margin-left: auto; }
+  .workbench-footer .back {
+    min-width: 76px; min-height: 48px; padding: 0 12px; border: 1px solid var(--line-strong);
+    border-radius: 12px; background: rgba(255, 255, 255, .55); color: #66645c;
+  }
+  .workbench-footer .primary { flex: 1; margin-left: 0; }
   .result-actions {
-    flex: 0 0 auto; margin: 12px -20px 0;
-    padding: 10px 20px calc(10px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));
-    background: rgba(246, 242, 232, .95);
-    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+    flex: 0 0 auto; margin: 0 -14px;
+    padding: 10px 14px calc(10px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));
+    background: rgba(249, 244, 220, .94); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
     border-top: 1px solid var(--line);
   }
-  /* 点灯后的按钮不再通栏，宽度贴合内容 */
   .result-actions .primary { width: 100%; margin-bottom: 0; }
   .export-note { font-size: 10px; letter-spacing: 0; margin: 3px 0 0; }
   .result-actions .quiet { flex: 1; }
-  .primary { min-height: 44px; white-space: nowrap; }
+  .primary { min-height: 48px; border-radius: 12px; white-space: nowrap; box-shadow: 0 10px 22px -16px rgba(113, 51, 46, .75); }
   .wish-fields label { margin-top: 6px; }
   .wish-fields { overflow-y: auto; min-height: 0; }
   .wish-fields input { font-size: 16px; }
@@ -265,13 +309,11 @@ button:focus, button:focus-visible, a:focus, a:focus-visible { outline: 2px soli
 
 /* 短屏和软键盘弹出时，允许页面滚动以保证输入与操作可达。 */
 @media (max-width: 760px) and (max-height: 680px) {
-  html, body { height: auto; overflow: auto; }
-  .studio { height: auto; min-height: 100vh; min-height: 100dvh; }
-  .workspace { flex: none; }
-  .stage { flex-basis: 240px; }
-  .workbench { flex: none; }
-  .options { flex: none; max-height: 210px; }
-  .wish-fields { flex: none; }
+  .header { height: 46px; }
+  .stage { flex-basis: 220px; }
+  .workbench { margin-top: 7px; }
+  .steps { margin-bottom: 6px; padding-top: 6px; padding-bottom: 4px; }
+  .step-description { margin-bottom: 7px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

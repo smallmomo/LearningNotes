@@ -1125,15 +1125,11 @@
     const ctx = canvas.getContext('2d');
     const half = size / 2;
     const gradient = ctx.createRadialGradient(half, half, 0, half, half, half);
-    gradient.addColorStop(0, 'rgba(255,218,142,.38)');
-    gradient.addColorStop(.18, 'rgba(255,188,92,.2)');
-    gradient.addColorStop(.56, 'rgba(240,140,50,.06)');
+    gradient.addColorStop(0, 'rgba(255,194,105,.32)');
+    gradient.addColorStop(.3, 'rgba(255,167,74,.16)');
+    gradient.addColorStop(.65, 'rgba(240,140,50,.05)');
     gradient.addColorStop(1, 'rgba(240,140,50,0)');
     ctx.fillStyle = gradient; ctx.fillRect(0, 0, size, size);
-    const core = ctx.createRadialGradient(half, half, 0, half, half, size * .18);
-    core.addColorStop(0, 'rgba(255,238,190,.26)');
-    core.addColorStop(1, 'rgba(255,238,190,0)');
-    ctx.fillStyle = core; ctx.fillRect(0, 0, size, size);
     const texture = new THREE.CanvasTexture(canvas);
     if ('colorSpace' in texture) texture.colorSpace = THREE.SRGBColorSpace;
     else if ('sRGBEncoding' in THREE) texture.encoding = THREE.sRGBEncoding;
@@ -1414,10 +1410,10 @@
       const sameFrame = design.frame === this.frame;
       const phi = sameFrame ? this.controls.phi : design.frame === 'lotus' ? 1.02 : 1.42;
       const theta = sameFrame ? this.controls.theta : design.frame === 'rabbit' ? .18 : .3;
-      const distance = radius / Math.sin(19 * Math.PI / 180) * .96;
+      const distance = radius / Math.sin(19 * Math.PI / 180) * 1.08;
       camera.position.set(Math.sin(phi) * Math.sin(theta), Math.cos(phi), Math.sin(phi) * Math.cos(theta)).multiplyScalar(distance).add(center);
-      camera.lookAt(center.clone().add(new THREE.Vector3(0, radius * .05, 0)));
-      camera.setViewOffset(1440, 1400, -80, -210, width, height);
+      camera.lookAt(center);
+      camera.setViewOffset(1440, 1400, -80, -160, width, height);
       camera.updateMatrixWorld();
       scene.add(new THREE.AmbientLight(0xffffff, .2));
       scene.add(new THREE.HemisphereLight(0xfff4df, 0x637f7b, .28));
@@ -1428,8 +1424,8 @@
       ground.position.y = bounds.min.y - .55;
       ground.scale.setScalar(Math.max(2.4, radius * 1.4));
       scene.add(ground);
-      const halo = createHalo(1024); halo.material.opacity = .86;
-      positionHalo(halo, camera, center, radius); halo.scale.multiplyScalar(.86); scene.add(halo);
+      const halo = createHalo(1024); halo.material.opacity = 1;
+      positionHalo(halo, camera, center, radius); scene.add(halo);
       const size = this.renderer.getSize(new THREE.Vector2());
       const ratio = this.renderer.getPixelRatio();
       try {
@@ -1444,12 +1440,7 @@
         disposeObject(scene);
         this.renderer.render(this.scene, this.camera);
       }
-      // 纸面式后期层：压住边缘、提亮灯体周围，让下载图更像一张成品海报。
-      const centerGlow = ctx.createRadialGradient(width / 2, 850, 40, width / 2, 850, 720);
-      centerGlow.addColorStop(0, 'rgba(255,205,132,.12)');
-      centerGlow.addColorStop(.46, 'rgba(255,205,132,.04)');
-      centerGlow.addColorStop(1, 'rgba(255,205,132,0)');
-      ctx.fillStyle = centerGlow; ctx.fillRect(0, 0, width, height);
+      // 纸面式后期层：只压住边缘，保留灯体后方原生光晕的清透层次。
       const edge = ctx.createRadialGradient(width / 2, height / 2, 420, width / 2, height / 2, 1220);
       edge.addColorStop(0, 'rgba(0,0,0,0)');
       edge.addColorStop(1, 'rgba(0,0,0,.34)');
