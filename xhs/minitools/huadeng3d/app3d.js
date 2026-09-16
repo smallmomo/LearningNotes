@@ -99,8 +99,6 @@
 
   function updateArt(rebuild = true) {
     if (rebuild) studio.setDesign(selection, completed ? 4 : Math.min(step, 3));
-    $('previewName').textContent = completed ? selection.name || '一盏团圆' : steps[step].caption;
-    $('previewCaption').textContent = completed ? selection.wish || '愿灯火可亲，所念皆如愿' : steps[step].subtitle;
   }
 
   function frameIcon(frame) {
