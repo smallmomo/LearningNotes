@@ -76,7 +76,7 @@ button:focus, button:focus-visible, a:focus, a:focus-visible { outline: 2px soli
 }
 .stage-heading { position: absolute; top: 32px; left: 34px; right: 34px; z-index: 1; display: flex; justify-content: space-between; color: #c6b991; font-size: 11px; letter-spacing: 2.5px; }
 .stage-hint { position: absolute; bottom: 32px; left: 16px; right: 16px; text-align: center; color: #b5b297; font-size: 11px; letter-spacing: 1px; z-index: 1; pointer-events: none; }
-.artwork { position: relative; width: 100%; height: 570px; flex: 1 1 auto; min-height: 0; margin-top: 14px; touch-action: pan-y; }
+.artwork { position: relative; width: 100%; height: 620px; flex: 1 1 auto; min-height: 0; margin-top: 14px; touch-action: pan-y; }
 .artwork svg { width: 100%; height: 100%; display: block; }
 .stage-caption { position: relative; z-index: 1; color: #eddfbc; text-align: center; flex: 0 0 auto; margin: 0 32px 72px; max-width: calc(100% - 64px); overflow-wrap: anywhere; }
 .stage-caption h1 { font-family: var(--serif); font-weight: 400; font-size: 25px; letter-spacing: 5px; margin: 0 0 12px; }
@@ -201,7 +201,7 @@ button:focus, button:focus-visible, a:focus, a:focus-visible { outline: 2px soli
   .brand small { display: none; }
   .seal { font-size: 15px; min-width: 26px; padding: 2px 4px; }
   .workspace { display: flex; flex-direction: column; border: 0; box-shadow: none; min-height: 0; flex: 1; background: transparent; }
-  .stage { flex: 0 0 34vh; flex: 0 0 clamp(210px, 34svh, 340px); min-height: 0; margin: 0 10px; border-radius: 4px; }
+  .stage { flex: 0 0 40vh; flex: 0 0 clamp(250px, 40svh, 390px); min-height: 0; margin: 0 10px; border-radius: 4px; }
   .stage-heading { top: 18px; left: 24px; right: 24px; font-size: 9px; }
   .artwork { height: auto; flex: 1 1 0; margin: 0; }
   .stage-caption { margin: 0 16px 38px; max-width: calc(100% - 32px); }
@@ -268,7 +268,7 @@ button:focus, button:focus-visible, a:focus, a:focus-visible { outline: 2px soli
   html, body { height: auto; overflow: auto; }
   .studio { height: auto; min-height: 100vh; min-height: 100dvh; }
   .workspace { flex: none; }
-  .stage { flex-basis: 210px; }
+  .stage { flex-basis: 240px; }
   .workbench { flex: none; }
   .options { flex: none; max-height: 210px; }
   .wish-fields { flex: none; }

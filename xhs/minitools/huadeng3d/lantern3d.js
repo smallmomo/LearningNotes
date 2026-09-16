@@ -1160,7 +1160,7 @@
   function createGround() {
     const shadow = new THREE.Mesh(
       new THREE.CircleGeometry(1, 48),
-      new THREE.MeshBasicMaterial({ map: radialTexture([[0, 'rgba(4,10,12,.55)'], [.45, 'rgba(4,10,12,.3)'], [1, 'rgba(4,10,12,0)']]), transparent: true, depthWrite: false, opacity: .8 })
+      new THREE.MeshBasicMaterial({ map: radialTexture([[0, 'rgba(4,10,12,.24)'], [.45, 'rgba(4,10,12,.12)'], [1, 'rgba(4,10,12,0)']]), transparent: true, depthWrite: false, opacity: .36 })
     );
     shadow.rotation.x = -Math.PI / 2;
     const group = new THREE.Group();
@@ -1291,7 +1291,7 @@
         const bounds = new THREE.Box3().setFromObject(boundsModel);
         const sphere = bounds.getBoundingSphere(new THREE.Sphere());
         this.designRadius = sphere.radius;
-        this.controls.target.copy(sphere.center).add(new THREE.Vector3(0, .2, 0));
+        this.controls.target.copy(sphere.center).add(new THREE.Vector3(0, .68, 0));
         this.controls.theta = selection.frame === 'rabbit' ? .18 : .3;
         this.controls.phi = selection.frame === 'lotus' ? 1.02 : 1.42;
         this._fitCamera();
@@ -1310,7 +1310,7 @@
 
     _fitCamera() {
       const halfFov = Math.atan(Math.tan(this.camera.fov * Math.PI / 360) * Math.min(1, this.camera.aspect));
-      const distance = this.designRadius / Math.sin(halfFov) * 1.12;
+      const distance = this.designRadius / Math.sin(halfFov) * 0.84;
       this.controls.radius = distance;
       this.controls.minR = distance * .65;
       this.controls.maxR = distance * 1.8;
