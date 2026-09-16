@@ -61,8 +61,8 @@
       ]
     },
     {
-      label: '点灯', title: '把心愿点亮', description: '给花灯起个名字，留下一句祝福。按下点灯，让光透过纸面。',
-      caption: '只等这一点光', subtitle: '愿这盏亲手做的灯，照见你心里的温暖。', next: '点亮我的花灯'
+      label: '点灯', title: '写下名字与心愿', description: '留下一句祝福，再点亮这盏花灯。',
+      caption: '只等这一点光', subtitle: '愿这盏亲手做的灯，照见你心里的温暖。', next: '点亮花灯'
     }
   ];
 
@@ -195,13 +195,15 @@
     $('options').scrollLeft = 0;
     requestAnimationFrame(updateOptionScrollbar);
 
-    $('wishFields').hidden = step !== 4;
+    $('wishFields').hidden = step !== 4 || completed;
     $('backButton').disabled = step === 0;
     $('nextButton').textContent = `${current.next}  →`;
     document.querySelector('.workbench-footer').hidden = completed;
     $('resultActions').hidden = !completed;
     // 重放步骤内容的进场动画
     const content = document.querySelector('.step-content');
+    content.classList.toggle('wish-step', step === 4 && !completed);
+    content.classList.toggle('result-step', completed);
     content.classList.remove('enter');
     void content.offsetWidth;
     content.classList.add('enter');

@@ -318,6 +318,17 @@ button:focus, button:focus-visible, a:focus, a:focus-visible { outline: 2px soli
   .wish-fields label { margin-top: 6px; }
   .wish-fields { overflow-y: auto; min-height: 0; }
   .wish-fields input { font-size: 16px; }
+  .step-content.wish-step .step-description { margin-bottom: 8px; }
+  .step-content.wish-step .wish-fields {
+    flex: 0 0 auto; overflow: visible; padding: 10px 12px 8px;
+    border: 1px solid var(--line); border-radius: 12px; background: rgba(255, 255, 255, .66);
+  }
+  .step-content.wish-step .wish-fields label {
+    margin: 0 0 3px; color: #777268; font-size: 10px; letter-spacing: .5px;
+  }
+  .step-content.wish-step .wish-fields input { padding: 5px 0 7px; margin: 0 0 8px; }
+  .step-content.wish-step .wish-fields input:last-child { margin-bottom: 0; }
+  .step-content.result-step .step-description { margin-bottom: 4px; }
   .collection { padding: 20px; min-height: 0; overflow-y: auto; padding-bottom: calc(20px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))); }
   .collection-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 }
