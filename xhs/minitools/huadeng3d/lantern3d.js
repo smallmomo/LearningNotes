@@ -32,7 +32,8 @@
     lotus:  { kind: 'lotus',  height: 230, widthAt: (t) => 70 + 150 * Math.pow(Math.sin(Math.PI * t), .6) },
     rabbit: { kind: 'rabbit', height: 230, widthAt: (t) => 60 + 130 * Math.pow(Math.sin(Math.PI * t), .7) },
     sittingRabbit: { kind: 'rabbit', variant: 'sitting', height: 230, widthAt: (t) => 60 + 130 * Math.pow(Math.sin(Math.PI * t), .7) },
-    palace: { kind: 'palace', height: 280, widthAt: () => 80 }
+    palace: { kind: 'palace', height: 280, widthAt: () => 80 },
+    koi: { kind: 'koi', height: 220, widthAt: () => 100 }
   };
 
   const TASSEL = {
@@ -869,6 +870,73 @@
     return g;
   }
 
+  function buildKoi(p, stage, selection) {
+    const g=new THREE.Group();
+    const paper=paperMaterial(p,stage>=4,stage>=2?selection.pattern:'plain');
+    const finPaper=paperMaterial(p,stage>=4,'plain');
+    const gold=new THREE.LineBasicMaterial({color:0xe2b66d});
+    const dark=new THREE.MeshStandardMaterial({color:0x261b16,roughness:.3});
+    const brass=new THREE.MeshStandardMaterial({color:0xd8aa60,metalness:.3,roughness:.5});
+    const shine=new THREE.MeshBasicMaterial({color:0xfff3d1});
+    function line(points) {g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points),gold));}
+    const bodyPoint=(x,y,z)=>{
+      const taper=.88-.22*x;
+      return new THREE.Vector3(x*1.65,y*.92*taper,z*.65*taper);
+    };
+    if(stage>0) {
+      const geometry=new THREE.SphereGeometry(1,56,36), pos=geometry.attributes.position, uv=geometry.attributes.uv;
+      for(let i=0;i<pos.count;i++) {
+        const x=pos.getX(i), y=pos.getY(i), v=bodyPoint(x,y,pos.getZ(i));
+        pos.setXYZ(i,v.x,v.y,v.z); uv.setXY(i,x*.5+.5,y*.5+.5);
+      }
+      geometry.computeVertexNormals(); g.add(new THREE.Mesh(geometry,paper));
+    }
+    // 稀疏竹骨沿鱼身弧面铺开，扎骨阶段也能辨认鱼形。
+    for(let k=0;k<6;k++) {
+      const a=k*Math.PI/6;
+      line(Array.from({length:81},(_,i)=>{const t=i/80*Math.PI*2;return bodyPoint(Math.cos(t),Math.sin(t)*Math.cos(a),Math.sin(t)*Math.sin(a));}));
+    }
+    [-.65,-.2,.3,.7].forEach(x=>line(Array.from({length:65},(_,i)=>{
+      const a=i/64*Math.PI*2,r=Math.sqrt(1-x*x); return bodyPoint(x,r*Math.cos(a),r*Math.sin(a));
+    })));
+    function fin(outline,depth) {
+      const shape=new THREE.Shape(); shape.moveTo(...outline[0]);
+      for(let i=1;i<outline.length;i++) shape.lineTo(...outline[i]);
+      shape.closePath();
+      if(stage>0) {
+        const geo=new THREE.ExtrudeGeometry(shape,{depth:.055,bevelEnabled:true,bevelThickness:.025,bevelSize:.025,bevelSegments:2,steps:1});
+        const mesh=new THREE.Mesh(geo,finPaper); mesh.position.z=depth;g.add(mesh);
+      }
+      line([...outline,outline[0]].map(([x,y])=>new THREE.Vector3(x,y,depth+.07)));
+      outline.slice(2,-1).forEach(([x,y])=>line([new THREE.Vector3(...outline[0],depth+.075),new THREE.Vector3(x,y,depth+.075)]));
+    }
+    // 扇形双尾、背鳍与两侧胸鳍，而非竖挂的常规灯笼轮廓。
+    fin([[1.34,0],[1.83,.39],[2.38,.8],[2.28,.34],[1.99,0],[2.28,-.34],[2.38,-.8],[1.83,-.39]],-.025);
+    fin([[-.68,.67],[-.32,1.12],[.15,1.19],[.64,.89],[.89,.46],[.15,.68]],-.025);
+    fin([[-.38,-.59],[.15,-1.02],[.58,-.96],[.35,-.55]],-.025);
+    [-1,1].forEach(side=>{
+      fin([[-.83,-.14],[-.37,-.37],[.08,-.8],[-.5,-.67],[-.88,-.35]],side*.46);
+      if(stage>0) {
+        [[.14,brass,side*.455],[.1,dark,side*.48],[.03,shine,side*.56]].forEach(([r,mat,z],i)=>{
+          const eye=new THREE.Mesh(new THREE.SphereGeometry(r,20,14),mat);
+          eye.position.set(-1.12-(i===2?.027:0),.19+(i===2?.035:0),z);eye.scale.z=.5;g.add(eye);
+        });
+        const surface=(x,y)=>{
+          const q=x/1.65,t=.88-.22*q,depth=.65*t*Math.sqrt(Math.max(0,1-q*q-(y/(.92*t))**2));
+          return new THREE.Vector3(x,y,side*(depth+.012));
+        };
+        line(Array.from({length:25},(_,i)=>{const t=i/24;return surface(-.89+.19*Math.sin(t*Math.PI),.5-t*1.04);}));
+        if(stage>=2) for(let row=-1;row<=1;row++) for(let col=0;col<5;col++) {
+          const cx=-.45+col*.29+(row===0?.1:0),cy=row*.25;
+          line(Array.from({length:17},(_,i)=>{const a=-Math.PI*.48+i/16*Math.PI*.96;return surface(cx+.12*Math.cos(a),cy+.12*Math.sin(a));}));
+        }
+      }
+    });
+    // 双点吊绳使横向鱼身在悬挂时保持平衡。
+    line([new THREE.Vector3(-.7,.78,0),new THREE.Vector3(0,1.52,0),new THREE.Vector3(.78,.58,0)]);
+    return g;
+  }
+
   function buildLantern(selection, stage) {
     const shape = SHAPES[selection.frame] || SHAPES.round;
     const p = PALETTE[selection.paper] || PALETTE.vermilion;
@@ -878,9 +946,11 @@
     const metalMat = new THREE.MeshStandardMaterial({ color: METAL, roughness: 0.4, metalness: 0.6 });
 
     const special = !!shape.kind;
-    const top = shape.kind === 'palace' ? 1.98 : shape.kind === 'rabbit' ? 3.42 : shape.kind === 'lotus' ? 1.6 : .5 * shape.height * SCALE;
-    const bottom = shape.kind === 'palace' ? -1.85 : shape.kind === 'rabbit' ? -1.66 : shape.kind === 'lotus' ? -1.05 : -.5 * shape.height * SCALE;
-    if (shape.kind === 'palace') {
+    const top = shape.kind === 'koi' ? 1.55 : shape.kind === 'palace' ? 1.98 : shape.kind === 'rabbit' ? 3.42 : shape.kind === 'lotus' ? 1.6 : .5 * shape.height * SCALE;
+    const bottom = shape.kind === 'koi' ? -1.05 : shape.kind === 'palace' ? -1.85 : shape.kind === 'rabbit' ? -1.66 : shape.kind === 'lotus' ? -1.05 : -.5 * shape.height * SCALE;
+    if (shape.kind === 'koi') {
+      g.add(buildKoi(p,stage,selection));
+    } else if (shape.kind === 'palace') {
       g.add(buildPalace(p,stage,selection));
     } else if (special) {
       const body = shape.kind === 'lotus' ? buildLotus(p, lit, showMotif, selection.pattern)
