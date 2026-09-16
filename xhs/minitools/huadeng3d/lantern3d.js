@@ -711,6 +711,107 @@
     return g;
   }
 
+  // 参考图风格的玉兔：圆腹侧坐、单侧五官、双耳上扬，轮廓更接近纸扎兔灯。
+  function buildReferenceRabbit(p, lit, showMotif, pattern) {
+    const g = new THREE.Group();
+    const paper = paperMaterial(p, lit, 'plain');
+    const bodyMat = paperMaterial(p, lit, showMotif ? pattern : 'plain');
+    const pink = new THREE.MeshStandardMaterial({color:0xe9988a,roughness:.9});
+    const dark = new THREE.MeshStandardMaterial({color:0x301611,roughness:.23});
+    const brass = new THREE.MeshStandardMaterial({color:0xd6a14d,metalness:.25,roughness:.6});
+    const gleam = new THREE.MeshBasicMaterial({color:0xfff3dc});
+    const bone = new THREE.LineBasicMaterial({color:0xc99e62,transparent:true,opacity:.66});
+    function rib(points) {
+      const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(points),bone);
+      line.userData.rabbitRib = true; g.add(line);
+    }
+    function oval(scale, pos, mat, tilt=0, decoration=false) {
+      const mesh = new THREE.Mesh(new THREE.SphereGeometry(1,48,32),mat);
+      mesh.scale.set(...scale); mesh.position.set(...pos); mesh.rotation.z=tilt;
+      mesh.userData.decoration=decoration; g.add(mesh); mesh.updateMatrix();
+      if(mat===bodyMat) {
+        const positions=mesh.geometry.attributes.position, uv=mesh.geometry.attributes.uv;
+        for(let i=0;i<uv.count;i++) uv.setXY(i,positions.getX(i)*.5+.5,positions.getY(i)*.5+.5);
+      }
+      return mesh;
+    }
+    function outline(mesh) {
+      rib(Array.from({length:81},(_,i)=>{
+        const a=i/80*Math.PI*2;
+        return new THREE.Vector3(Math.cos(a)*1.006,Math.sin(a)*1.006,0).applyMatrix4(mesh.matrix);
+      }));
+    }
+    // 身体、臀部与头的比例按参考图：低重心圆腹，头贴在左上方。
+    const body=oval([1.13,1.11,.84],[.15,-.29,0],bodyMat);
+    oval([.27,.24,.28],[1.18,-.89,-.02],paper,.45);
+    [-1,1].forEach(side=>{
+      const thigh=oval([.4,.56,.19],[.68,-.91,side*.65],paper,-.37);
+      outline(thigh);
+      outline(oval([.43,.16,.26],[.48,-1.37,side*.64],paper,.06));
+      outline(oval([.23,.18,.27],[-.66,-1.36,side*.4],paper,-.12));
+    });
+    oval([.65,.56,.53],[-.75,.8,0],paper,-.13);
+    oval([.28,.26,.4],[-1.14,.63,.015],paper,-.13);
+    // 耳朵有真实厚度，内耳贴合外耳曲面，避免旧版悬空粉色片。
+    function ear(root, length, width, tilt) {
+      const group=new THREE.Group(); group.position.set(...root); group.rotation.z=tilt;
+      const outer=new THREE.Mesh(new THREE.SphereGeometry(1,40,28),paper);
+      outer.scale.set(width,length,.16); outer.position.y=length*.78;
+      group.add(outer); g.add(group);
+      [-1,1].forEach(side=>{
+        const positions=[],uv=[],indices=[];
+        for(let i=0;i<=28;i++) for(let j=0;j<=12;j++) {
+          const y=-.77+i/28*1.62, x=(j/6-1)*Math.sqrt(Math.max(0,1-y*y))*.69;
+          positions.push(x*width,y*length+length*.78,side*(.16*Math.sqrt(Math.max(0,1-x*x-y*y))+.006));
+          uv.push(j/12,i/28);
+          if(i<28&&j<12) {const a=i*13+j;indices.push(a,a+13,a+1,a+1,a+13,a+14);}
+        }
+        const geometry=new THREE.BufferGeometry();
+        geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+        geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
+        geometry.setIndex(indices);geometry.computeVertexNormals();
+        const inner=new THREE.Mesh(geometry,pink);inner.material.side=THREE.DoubleSide;
+        inner.userData.decoration=true;group.add(inner);
+      });
+      group.updateMatrix();
+      rib(Array.from({length:81},(_,i)=>{
+        const a=i/80*Math.PI*2;
+        return new THREE.Vector3(width*Math.cos(a)*1.006,length*Math.sin(a)*1.006+length*.78,0).applyMatrix4(group.matrix);
+      }));
+    }
+    ear([-.85,1.18,-.2],.68,.22,-.2);
+    ear([-.57,1.17,.18],.74,.25,-.64);
+    // 经纬骨线精确贴合球面，两侧完整闭合。
+    [-.8,-.6,-.4,-.2,0,.2,.4,.6,.8].forEach(y=>{
+      const r=Math.sqrt(1-y*y);
+      rib(Array.from({length:97},(_,i)=>{
+        const a=i/96*Math.PI*2;
+        return new THREE.Vector3(r*Math.cos(a)*1.004,y*1.004,r*Math.sin(a)*1.004).applyMatrix4(body.matrix);
+      }));
+    });
+    for(let k=0;k<7;k++) {
+      const a=k*Math.PI/7;
+      rib(Array.from({length:97},(_,i)=>{
+        const t=i/96*Math.PI*2;
+        return new THREE.Vector3(Math.sin(t)*Math.cos(a)*1.004,Math.cos(t)*1.004,Math.sin(t)*Math.sin(a)*1.004).applyMatrix4(body.matrix);
+      }));
+    }
+    [-1,1].forEach(side=>{
+      oval([.12,.135,.04],[-.91,.88,side*.507],dark,0,true);
+      oval([.035,.036,.012],[-.94,.926,side*.545],gleam,0,true);
+      oval([.043,.031,.022],[-1.367,.653,side*.17],pink,0,true);
+      const mouth=new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(-1.36,.632,side*.18),new THREE.Vector3(-1.31,.57,side*.23),new THREE.Vector3(-1.25,.58,side*.28)
+      ]),new THREE.LineBasicMaterial({color:0x97583f}));
+      mouth.userData.decoration=true;g.add(mouth);
+    });
+    const collar=new THREE.Mesh(new THREE.TorusGeometry(.26,.026,8,40),brass);
+    collar.rotation.x=Math.PI/2;collar.position.set(.18,.805,0);g.add(collar);
+    // 背上的三角提梁与兔头分开，保持侧坐轮廓。
+    rib([new THREE.Vector3(-.06,.82,0),new THREE.Vector3(.18,1.5,0),new THREE.Vector3(.43,.82,0)]);
+    return g;
+  }
+
   function surfaceFrame(body) {
     const g = new THREE.Group();
     const mat = new THREE.LineBasicMaterial({ color: 0xd3b77f, transparent: true, opacity: .78 });
@@ -946,15 +1047,15 @@
     const metalMat = new THREE.MeshStandardMaterial({ color: METAL, roughness: 0.4, metalness: 0.6 });
 
     const special = !!shape.kind;
-    const top = shape.kind === 'koi' ? 1.55 : shape.kind === 'palace' ? 1.98 : shape.kind === 'rabbit' ? 3.42 : shape.kind === 'lotus' ? 1.6 : .5 * shape.height * SCALE;
-    const bottom = shape.kind === 'koi' ? -1.05 : shape.kind === 'palace' ? -1.85 : shape.kind === 'rabbit' ? -1.66 : shape.kind === 'lotus' ? -1.05 : -.5 * shape.height * SCALE;
+    const top = shape.variant === 'sitting' ? 2.65 : shape.kind === 'koi' ? 1.55 : shape.kind === 'palace' ? 1.98 : shape.kind === 'rabbit' ? 3.42 : shape.kind === 'lotus' ? 1.6 : .5 * shape.height * SCALE;
+    const bottom = shape.variant === 'sitting' ? -1.54 : shape.kind === 'koi' ? -1.05 : shape.kind === 'palace' ? -1.85 : shape.kind === 'rabbit' ? -1.66 : shape.kind === 'lotus' ? -1.05 : -.5 * shape.height * SCALE;
     if (shape.kind === 'koi') {
       g.add(buildKoi(p,stage,selection));
     } else if (shape.kind === 'palace') {
       g.add(buildPalace(p,stage,selection));
     } else if (special) {
       const body = shape.kind === 'lotus' ? buildLotus(p, lit, showMotif, selection.pattern)
-        : shape.variant === 'sitting' ? buildSittingRabbit(p, lit, showMotif, selection.pattern)
+        : shape.variant === 'sitting' ? buildReferenceRabbit(p, lit, showMotif, selection.pattern)
         : buildRabbit(p, lit, showMotif, selection.pattern);
       if (stage === 0) {
         if (shape.kind === 'rabbit') { g.add(surfaceFrame(body)); disposeObject(body); }
@@ -981,7 +1082,7 @@
     g.add(topLoop);
     if (shape.kind === 'rabbit') {
       g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(shape.variant === 'sitting' ? -.35 : 0, 1.78, shape.variant === 'sitting' ? 0 : .35), new THREE.Vector3(0, top + .08, 0)
+        new THREE.Vector3(shape.variant === 'sitting' ? .18 : 0, shape.variant === 'sitting' ? 1.5 : 1.78, shape.variant === 'sitting' ? 0 : .35), new THREE.Vector3(0, top + .08, 0)
       ]), new THREE.LineBasicMaterial({ color: METAL })));
     }
     if (shape.kind === 'lotus') {

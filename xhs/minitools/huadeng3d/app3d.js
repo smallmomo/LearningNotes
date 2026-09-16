@@ -84,7 +84,7 @@
       hex: '<path d="M15 13L30 8 45 13 47 49 30 55 13 49Z"/><path d="M30 8V55M15 13H45M13 49H47"/>',
       lotus: '<path d="M30 49Q5 45 6 29Q22 29 30 49Q55 45 54 29Q38 29 30 49Z"/><path d="M30 49Q10 28 18 18Q29 25 30 49Q50 28 42 18Q31 25 30 49Z"/><path d="M30 48Q16 29 30 12Q44 29 30 48Z"/>',
       rabbit: '<ellipse cx="30" cy="43" rx="13" ry="14"/><ellipse cx="24" cy="14" rx="4" ry="12" transform="rotate(-12 24 14)"/><ellipse cx="37" cy="13" rx="4" ry="12" transform="rotate(8 37 13)"/><ellipse cx="30" cy="29" rx="13" ry="11"/><path d="M25 28h.1M35 28h.1" stroke-width="3"/>',
-      sittingRabbit: '<ellipse cx="33" cy="43" rx="13" ry="14"/><ellipse cx="20" cy="25" rx="10" ry="9"/><path d="M24 18Q31 2 46 5Q44 17 27 22M29 23Q47 17 55 30Q39 35 29 26M20 34Q15 45 23 52M21 54H42M25 35L39 39"/><circle cx="20" cy="24" r="1.8"/><circle cx="47" cy="46" r="4"/>'
+      sittingRabbit: '<ellipse cx="33" cy="41" rx="17" ry="17"/><ellipse cx="19" cy="25" rx="10" ry="9"/><path d="M18 17Q17 3 23 2Q28 5 23 17M24 18Q30 1 37 4Q40 10 28 21M18 35Q33 40 48 35M17 43Q33 48 49 43M24 30Q20 45 27 56M37 25Q45 37 42 51"/><ellipse cx="40" cy="48" rx="6" ry="9" transform="rotate(25 40 48)"/><ellipse cx="21" cy="57" rx="5" ry="2"/><ellipse cx="38" cy="57" rx="7" ry="2"/><circle cx="18" cy="24" r="1.8"/>'
     };
     return `<svg viewBox="0 0 60 68" aria-hidden="true" fill="#d4b58622" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">${silhouettes[frame] || silhouettes.round}<path d="M30 57v7M27 64h6"/></svg>`;
   }
