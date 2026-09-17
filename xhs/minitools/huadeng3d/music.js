@@ -188,7 +188,7 @@
     const button = target.closest && target.closest('button');
     if (!button || button.disabled) return '';
     if (button.classList.contains('option')) return 'select';
-    if (button.id === 'backButton' || button.id === 'nextButton') return '';
+    if (button.id === 'backButton' || button.id === 'nextButton' || button.id === 'generateButton') return '';
     if (button.id === 'downloadButton' || button.id === 'saveButton' || button.id === 'restartButton') return '';
     if (button.id === 'returnButton') return 'select';
     return 'select';

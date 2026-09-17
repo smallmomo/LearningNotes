@@ -22,6 +22,7 @@
   const selection = { frame: 'round', paper: 'vermilion', pattern: 'plum', tassel: 'red', name: '', wish: '' };
   let step = 0;
   let completed = false;
+  let lit = false;
   let lastSaved = '';
   let toastTimer;
   let downloading = false;
@@ -128,7 +129,7 @@
   }
 
   function updateArt(rebuild = true) {
-    if (rebuild) studio.setDesign(selection, completed ? 4 : Math.min(step, 3));
+    if (rebuild) studio.setDesign(selection, lit ? 4 : Math.min(step, 3));
   }
 
   function frameIcon(frame) {
@@ -166,7 +167,7 @@
       $('steps').append(button);
     });
 
-    $('stageLabel').textContent = completed ? '心愿已点亮' : `${String(step + 1).padStart(2, '0')} / ${current.label}`;
+    $('stageLabel').textContent = lit ? '心愿已点亮' : `${String(step + 1).padStart(2, '0')} / ${current.label}`;
     $('stepNumber').textContent = ['第一道', '第二道', '第三道', '第四道', '第五道'][step];
     $('stepTitle').textContent = completed ? '灯火已亮，心愿已藏' : current.title;
     $('stepDescription').textContent = completed ? '保存一张带有花灯、名字与祝福的图片，把这份温暖留住。' : current.description;
@@ -226,6 +227,8 @@
     $('wishFields').hidden = step !== 4 || completed;
     $('backButton').disabled = step === 0;
     $('nextButton').textContent = `${current.next}  →`;
+    $('nextButton').hidden = lit;
+    $('generateButton').hidden = !lit;
     document.querySelector('.workbench-footer').hidden = completed;
     $('resultActions').hidden = !completed;
     $('workshop').classList.toggle('is-completed', completed);
@@ -243,6 +246,7 @@
 
   function goToStep(index) {
     completed = false;
+    lit = false;
     resultRequest++;
     $('stage').classList.remove('illuminate');
     step = index;
@@ -384,9 +388,14 @@
   });
   $('nextButton').onclick = () => {
     if (step < 4) return goToStep(step + 1);
-    completed = true;
+    lit = true;
     renderStep();
     $('stage').classList.add('illuminate');
+  };
+  $('generateButton').onclick = () => {
+    if (!lit || completed) return;
+    completed = true;
+    renderStep();
   };
   $('lanternName').oninput = (event) => { selection.name = event.target.value.trim(); updateArt(false); };
   $('blessing').oninput = (event) => { selection.wish = event.target.value.trim(); updateArt(false); };
