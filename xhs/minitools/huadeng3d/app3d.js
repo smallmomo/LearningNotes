@@ -19,7 +19,7 @@
   }
   if (supportsFlexGap()) document.documentElement.classList.add('supports-flex-gap');
   const storageKey = 'huadeng-3d-state';
-  const selection = { frame: 'round', paper: 'vermilion', pattern: 'plum', tassel: 'red', name: '', wish: '' };
+  const selection = { frame: 'round', paper: 'rose', pattern: 'plum', tassel: 'red', name: '', wish: '' };
   let step = 0;
   let completed = false;
   let lit = false;
@@ -69,7 +69,7 @@
     {
       label: '糊纸', title: '蒙一层柔软灯纸', description: '纸面覆上竹骨，细褶留在灯身。挑一个喜欢的颜色。',
       caption: '纸上有温度', subtitle: '薄纸透光，竹骨藏在细密的纸褶里。', key: 'paper', next: '描上纹样',
-      choices: [['vermilion', '柿红', '温暖喜庆', '#b65535'], ['coral', '橘红', '活泼明快', '#c96a4a'], ['amber', '明黄', '明亮贵气', '#d99a3d'], ['ivory', '米白', '素净温柔', '#dcca9e'], ['jade', '青绿', '清润明快', '#2e8b57'], ['indigo', '石青', '清澈沉静', '#2e5d8c'], ['lilac', '青莲', '浓淡雅致', '#8b2671'], ['rose', '胭脂', '柔艳明净', '#c94a5e']]
+      choices: [['rose', '胭脂', '柔艳明净', '#c94a5e'], ['vermilion', '柿红', '温暖喜庆', '#b65535'], ['coral', '橘红', '活泼明快', '#c96a4a'], ['amber', '明黄', '明亮贵气', '#d99a3d'], ['ivory', '米白', '素净温柔', '#dcca9e'], ['jade', '青绿', '清润明快', '#2e8b57'], ['indigo', '石青', '清澈沉静', '#2e5d8c'], ['lilac', '青莲', '浓淡雅致', '#8b2671']]
     },
     {
       label: '描花', title: '描一点心意', description: '让细细的纹样落在纸上。也可以留下素面，欣赏纸的肌理。',
