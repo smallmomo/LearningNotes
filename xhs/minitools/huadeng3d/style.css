@@ -213,7 +213,7 @@ button:focus, button:focus-visible, a:focus, a:focus-visible { outline: 2px soli
   display: flex; justify-content: space-between; align-items: center;
   position: sticky; top: 0; z-index: 2;
   padding-bottom: 12px; margin-bottom: 8px;
-  background: linear-gradient(180deg, var(--paper) 70%, rgba(246, 242, 232, 0) 100%);
+  background: var(--paper);
 }
 .collection-heading h2 { margin-right: auto; }
 .collection h2 { font-family: var(--serif); font-weight: 400; letter-spacing: 3px; margin: 6px 0 0; }
@@ -391,7 +391,7 @@ button:focus, button:focus-visible, a:focus, a:focus-visible { outline: 2px soli
   .collection { padding: 0 16px 16px; min-height: 0; overflow-y: auto; padding-bottom: calc(16px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))); }
   .collection-heading {
     padding: 16px 0 10px; margin-bottom: 4px;
-    background: linear-gradient(180deg, var(--paper) 65%, rgba(249, 244, 220, 0) 100%);
+    background: var(--paper);
   }
   .collection-heading .eyebrow { font-size: 9px; letter-spacing: 3px; }
   .collection-heading h2 { font-size: 22px; margin-top: 4px; }
