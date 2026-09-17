@@ -255,6 +255,119 @@
         x.arc(cx, cy, 6, 0, Math.PI * 2);
         x.fill();
       });
+    } else if (pattern === 'haitang') {
+      x.save();
+      x.translate(256, 256); x.scale(1, aspect); x.translate(-256, -256);
+      x.globalAlpha = .65; x.lineWidth = 4;
+      x.beginPath(); x.moveTo(147, 393);
+      x.bezierCurveTo(200, 353, 230, 282, 285, 212);
+      x.quadraticCurveTo(314, 177, 356, 151); x.stroke();
+      x.lineWidth = 2.5;
+      x.beginPath(); x.moveTo(213, 302); x.quadraticCurveTo(169, 286, 157, 255); x.stroke();
+      const leaf = (cx, cy, angle, size) => {
+        x.save(); x.translate(cx, cy); x.rotate(angle); x.scale(size, size);
+        x.beginPath(); x.moveTo(0, 0);
+        x.bezierCurveTo(5, -23, 31, -30, 49, -21);
+        x.bezierCurveTo(32, -2, 13, 7, 0, 0);
+        x.globalAlpha = .48; x.fill(); x.restore();
+      };
+      leaf(187, 349, -2.1, 1);
+      leaf(227, 280, .9, .85);
+      leaf(318, 178, -.65, .7);
+      const flower = (cx, cy, size, rotation) => {
+        x.save(); x.translate(cx, cy); x.rotate(rotation); x.scale(size, size);
+        // One continuous silhouette avoids overlapping outlines at the centre.
+        x.beginPath();
+        for (let i = 0; i <= 180; i++) {
+          const a = i / 180 * Math.PI * 2 - Math.PI / 2;
+          const r = 39 + 11 * Math.cos(5 * (a + Math.PI / 2));
+          const px = Math.cos(a) * r, py = Math.sin(a) * r;
+          if (i === 0) x.moveTo(px, py); else x.lineTo(px, py);
+        }
+        x.closePath();
+        x.globalAlpha = 1; x.fillStyle = p.paper; x.fill();
+        x.fillStyle = p.ink; x.globalAlpha = .24; x.fill();
+        x.globalAlpha = .9; x.lineWidth = 2.5; x.stroke();
+        x.lineWidth = 1.4;
+        for (let i = 0; i < 9; i++) {
+          const a = i * Math.PI * 2 / 9;
+          x.beginPath(); x.moveTo(Math.cos(a) * 4, Math.sin(a) * 4);
+          x.lineTo(Math.cos(a) * 13, Math.sin(a) * 13); x.stroke();
+          x.beginPath(); x.arc(Math.cos(a) * 15, Math.sin(a) * 15, 2, 0, Math.PI * 2); x.fill();
+        }
+        x.restore();
+      };
+      flower(226, 292, 1.05, .18);
+      flower(304, 200, .75, -.2);
+      flower(157, 253, .55, .35);
+      x.restore();
+    } else if (pattern === 'yulan') {
+      x.save();
+      x.translate(256, 256); x.scale(1, aspect); x.translate(-256, -256);
+      x.globalAlpha = .7; x.lineWidth = 4;
+      x.beginPath(); x.moveTo(165, 410);
+      x.bezierCurveTo(220, 374, 259, 302, 285, 236); x.stroke();
+      x.lineWidth = 2.6;
+      x.beginPath(); x.moveTo(223, 344); x.quadraticCurveTo(187, 320, 167, 277); x.stroke();
+      x.beginPath(); x.moveTo(265, 280); x.quadraticCurveTo(335, 274, 354, 225); x.stroke();
+      const flower = (cx, cy, scale, angle) => {
+        x.save(); x.translate(cx, cy); x.rotate(angle); x.scale(scale, scale);
+        const petal = (draw, wash) => {
+          x.beginPath(); draw(); x.closePath();
+          // Opaque paper underpainting hides the rear petals and branch.
+          x.globalAlpha = 1; x.fillStyle = p.paper; x.fill();
+          x.fillStyle = p.ink; x.globalAlpha = wash; x.fill();
+          x.globalAlpha = .85; x.lineWidth = 2.6; x.stroke();
+        };
+        petal(() => {
+          x.moveTo(0, 0); x.bezierCurveTo(-33, -28, -26, -80, 0, -108);
+          x.bezierCurveTo(29, -78, 30, -30, 0, 0);
+        }, .32);
+        petal(() => {
+          x.moveTo(0, 0); x.bezierCurveTo(-39, -1, -64, -38, -62, -72);
+          x.bezierCurveTo(-25, -67, -4, -36, 0, 0);
+        }, .2);
+        petal(() => {
+          x.moveTo(0, 0); x.bezierCurveTo(40, -2, 66, -37, 61, -77);
+          x.bezierCurveTo(28, -69, 4, -36, 0, 0);
+        }, .26);
+        x.globalAlpha = .45; x.lineWidth = 1.5;
+        x.beginPath(); x.moveTo(0, -7); x.quadraticCurveTo(-26, -25, -46, -54); x.stroke();
+        x.beginPath(); x.moveTo(7, -9); x.quadraticCurveTo(30, -29, 47, -57); x.stroke();
+        x.restore();
+      };
+      flower(285, 238, 1, .13);
+      flower(168, 280, .61, -.42);
+      flower(354, 227, .43, .38);
+      x.restore();
+    } else if (pattern === 'starMoon') {
+      x.save();
+      x.translate(256, 256); x.scale(1, aspect); x.translate(-256, -256);
+      // Both curves share their endpoints, giving the crescent a closed silhouette.
+      x.beginPath(); x.moveTo(274, 135);
+      x.bezierCurveTo(153, 123, 151, 296, 277, 296);
+      x.bezierCurveTo(205, 270, 206, 173, 274, 135);
+      x.closePath(); x.globalAlpha = .55; x.fill();
+      x.lineWidth = 2.5; x.globalAlpha = .9; x.stroke();
+      const cloud = (cx, cy, size) => {
+        x.save(); x.translate(cx, cy); x.scale(size, size);
+        x.globalAlpha = .7; x.lineWidth = 2.5;
+        x.beginPath(); x.moveTo(-77, 12);
+        x.bezierCurveTo(-98, 9, -88, -14, -64, -10);
+        x.bezierCurveTo(-64, -42, -22, -49, -8, -23);
+        x.bezierCurveTo(8, -36, 33, -24, 30, -8);
+        x.bezierCurveTo(49, -15, 65, -4, 77, 8);
+        x.bezierCurveTo(27, 8, -16, 23, -77, 12); x.stroke();
+        x.globalAlpha = .4;
+        x.beginPath(); x.moveTo(-55, 28); x.quadraticCurveTo(-4, 33, 49, 20); x.stroke();
+        x.restore();
+      };
+      cloud(292, 339, 1);
+      cloud(342, 234, .5);
+      [[322,142,5],[360,183,3],[158,266,3],[186,337,2]].forEach(([cx, cy, r]) => {
+        x.globalAlpha = .75; x.beginPath(); x.arc(cx, cy, r, 0, Math.PI * 2); x.fill();
+      });
+      x.restore();
     } else if (pattern === 'cloud') {
       x.lineWidth = 2.5;
       [[140,140],[345,250],[175,370]].forEach(([cx,cy]) => {
