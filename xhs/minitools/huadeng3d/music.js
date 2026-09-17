@@ -5,6 +5,7 @@
 
   let ctx;
   let master;
+  let sfxMaster;
   let scheduleTimer = null;
   let nextTime = 0;
   let step = 0;
@@ -134,6 +135,65 @@
     };
   }
 
+  function playSfxTone(midi, time, level, duration, type) {
+    if (!ctx || !sfxMaster || document.hidden) return;
+    const envelope = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = type === 'select' ? 760 : type === 'next' ? 1300 : 1050;
+    filter.Q.value = 0.25;
+
+    envelope.gain.setValueAtTime(0.0001, time);
+    envelope.gain.exponentialRampToValueAtTime(level, time + 0.018);
+    envelope.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+    envelope.connect(filter);
+    filter.connect(sfxMaster);
+
+    const osc = ctx.createOscillator();
+    osc.type = type === 'select' ? 'sine' : 'sine';
+    osc.frequency.value = midiToFreq(midi);
+    osc.connect(envelope);
+    osc.start(time);
+    osc.stop(time + duration + 0.04);
+    osc.onended = () => {
+      osc.disconnect();
+      envelope.disconnect();
+      filter.disconnect();
+    };
+  }
+
+  function playUiSound(type = 'tap') {
+    if (!ctx || ctx.state !== 'running') return;
+    const time = ctx.currentTime + 0.006;
+    if (type === 'select') {
+      playSfxTone(62, time, 0.042, 0.22, type);
+      playSfxTone(69, time + 0.045, 0.018, 0.28, type);
+      return;
+    }
+    if (type === 'next') {
+      playSfxTone(69, time, 0.036, 0.36, type);
+      playSfxTone(74, time + 0.07, 0.03, 0.5, type);
+      return;
+    }
+    if (type === 'success') {
+      playSfxTone(62, time, 0.035, 0.55, type);
+      playSfxTone(69, time + 0.07, 0.035, 0.75, type);
+      playSfxTone(74, time + 0.16, 0.028, 0.95, type);
+      return;
+    }
+    playSfxTone(69, time, 0.032, 0.28, type);
+  }
+
+  function soundTypeForTarget(target) {
+    const button = target.closest && target.closest('button');
+    if (!button || button.disabled) return '';
+    if (button.classList.contains('option')) return 'select';
+    if (button.id === 'backButton' || button.id === 'nextButton') return '';
+    if (button.id === 'downloadButton' || button.id === 'saveButton' || button.id === 'restartButton') return '';
+    if (button.id === 'returnButton') return 'select';
+    return 'select';
+  }
+
   function schedule() {
     if (!ctx || ctx.state !== 'running' || document.hidden) return;
     if (nextTime < ctx.currentTime) nextTime = ctx.currentTime + 0.08;
@@ -174,6 +234,8 @@
     ctx = new AudioEngine();
     master = ctx.createGain();
     master.gain.value = 0.16;
+    sfxMaster = ctx.createGain();
+    sfxMaster.gain.value = 0.22;
 
     const toneSoftener = ctx.createBiquadFilter();
     toneSoftener.type = 'lowpass';
@@ -190,6 +252,7 @@
     toneSoftener.connect(delay);
     delay.connect(echo);
     echo.connect(ctx.destination);
+    sfxMaster.connect(ctx.destination);
 
     ctx.onstatechange = () => {
       if (ctx.state === 'running' && !document.hidden) beginScheduling();
@@ -216,11 +279,27 @@
     }
   }
 
+  function resumeAudio() {
+    start();
+    if (ctx && ctx.state === 'running') beginScheduling();
+  }
+
   ['pointerdown', 'keydown'].forEach(event => {
     document.addEventListener(event, () => {
-      if (!ctx || ctx.state !== 'running') start();
+      if (!ctx || ctx.state !== 'running' || !scheduleTimer) resumeAudio();
     }, { passive: true });
   });
+
+  document.addEventListener('click', event => {
+    const type = soundTypeForTarget(event.target);
+    if (!type) return;
+    if (!ctx || ctx.state !== 'running') {
+      start();
+      window.setTimeout(() => playUiSound(type), 40);
+      return;
+    }
+    playUiSound(type);
+  }, true);
 
   document.addEventListener('visibilitychange', () => {
     if (!ctx) return;
@@ -228,9 +307,19 @@
       stopScheduling();
       ctx.suspend().catch(() => {});
     } else {
-      start();
+      resumeAudio();
     }
   });
+  window.addEventListener('pageshow', resumeAudio);
+  window.addEventListener('focus', resumeAudio);
+
+  window.huadengSound = {
+    start: resumeAudio,
+    tap: () => playUiSound('tap'),
+    select: () => playUiSound('select'),
+    next: () => playUiSound('next'),
+    success: () => playUiSound('success'),
+  };
 
   start();
 })();
