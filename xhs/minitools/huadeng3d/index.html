@@ -4,14 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>花灯手作 · 3D 立体版</title>
-    <link rel="stylesheet" href="style.css?v=20260916-mobile34" />
+    <link rel="stylesheet" href="style.css?v=20260917-result1" />
     <style>
       #artwork3d { width: 100%; height: 100%; display: block; touch-action: pan-y; cursor: grab; }
       #artwork3d:active { cursor: grabbing; }
     </style>
     <script defer src="three.min.js"></script>
     <script defer src="lantern3d.js?v=20260917-pattern5"></script>
-    <script defer src="app3d.js?v=20260917-pattern3"></script>
+    <script defer src="app3d.js?v=20260917-result1"></script>
     <script defer src="music.js?v=20260917-music8"></script>
   </head>
   <body>
@@ -22,6 +22,10 @@
       </header>
 
       <section class="workspace" id="workshop">
+        <section class="result-preview" id="resultPreview" aria-label="花灯纪念图" hidden>
+          <p class="result-status" id="resultStatus" role="status">正在生成纪念图…</p>
+          <img id="resultImage" width="1600" height="2000" alt="点亮后的花灯纪念图" hidden />
+        </section>
         <div class="stage" id="stage">
           <div class="stage-heading"><span>灯下 · 立体手作</span><span id="stageLabel">01 / 扎灯骨</span></div>
           <div class="artwork" id="artwork"><canvas id="artwork3d"></canvas></div>

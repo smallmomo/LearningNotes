@@ -25,6 +25,36 @@
   let lastSaved = '';
   let toastTimer;
   let downloading = false;
+  let resultImageKey = '';
+  let resultImageURL = '';
+  let resultRequest = 0;
+
+  async function renderResultImage() {
+    const request = ++resultRequest;
+    const design = Object.assign({}, selection);
+    const key = JSON.stringify(design);
+    $('resultImage').hidden = true;
+    $('resultStatus').hidden = false;
+    $('resultStatus').textContent = '正在生成纪念图…';
+    $('resultPreview').setAttribute('aria-busy', 'true');
+    try {
+      if (document.fonts) await document.fonts.ready;
+      if (!completed || request !== resultRequest) return;
+      if (resultImageKey !== key || !resultImageURL) {
+        const url = studio.exportCanvas(design).toDataURL('image/png');
+        resultImageURL = url;
+        resultImageKey = key;
+      }
+      $('resultImage').src = resultImageURL;
+      $('resultImage').alt = `${design.name || '一盏团圆'}，${design.wish || '愿灯火可亲，所念皆如愿'}`;
+      $('resultImage').hidden = false;
+      $('resultStatus').hidden = true;
+    } catch (error) {
+      $('resultStatus').textContent = '纪念图生成失败，请点击保存高清纪念图重试';
+    } finally {
+      if (request === resultRequest) $('resultPreview').setAttribute('aria-busy', 'false');
+    }
+  }
   let palacePatternSuggested = false;
   let collection = readCollection();
   const studio = new LanternStudio($('artwork3d'));
@@ -198,6 +228,8 @@
     $('nextButton').textContent = `${current.next}  →`;
     document.querySelector('.workbench-footer').hidden = completed;
     $('resultActions').hidden = !completed;
+    $('workshop').classList.toggle('is-completed', completed);
+    $('resultPreview').hidden = !completed;
     // 重放步骤内容的进场动画
     const content = document.querySelector('.step-content');
     content.classList.toggle('wish-step', step === 4 && !completed);
@@ -206,10 +238,12 @@
     void content.offsetWidth;
     content.classList.add('enter');
     updateArt();
+    if (completed) renderResultImage();
   }
 
   function goToStep(index) {
     completed = false;
+    resultRequest++;
     $('stage').classList.remove('illuminate');
     step = index;
     renderStep();
@@ -239,8 +273,16 @@
     $('downloadButton').textContent = '正在生成高清图…';
     try {
       await document.fonts.ready;
-      const canvas = studio.exportCanvas(design);
-      const dataURL = canvas.toDataURL('image/png');
+      const key = JSON.stringify(design);
+      const dataURL = key === resultImageKey && resultImageURL
+        ? resultImageURL : studio.exportCanvas(design).toDataURL('image/png');
+      if (completed && key === JSON.stringify(selection)) {
+        resultImageKey = key;
+        resultImageURL = dataURL;
+        $('resultImage').src = dataURL;
+        $('resultImage').hidden = false;
+        $('resultStatus').hidden = true;
+      }
       // 容器禁止 a[download]/blob 下载，改用 JSBridge 写临时文件后存入相册。
       const tool = window.xhs && window.xhs.miniTool;
       if (tool && tool.writeTempFile && tool.saveImageToPhotosAlbum) {
