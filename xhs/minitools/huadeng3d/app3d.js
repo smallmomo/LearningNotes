@@ -169,8 +169,8 @@
 
     $('stageLabel').textContent = lit ? '心愿已点亮' : `${String(step + 1).padStart(2, '0')} / ${current.label}`;
     $('stepNumber').textContent = ['第一道', '第二道', '第三道', '第四道', '第五道'][step];
-    $('stepTitle').textContent = completed ? '灯火已亮，心愿已藏' : current.title;
-    $('stepDescription').textContent = completed ? '保存一张带有花灯、名字与祝福的图片，把这份温暖留住。' : current.description;
+    $('stepTitle').textContent = lit ? '灯火已亮，心愿已藏' : current.title;
+    $('stepDescription').textContent = lit ? '保存一张带有花灯、名字与祝福的图片，把这份温暖留住。' : current.description;
     clear($('options'));
 
     const optionButtons = [];
@@ -224,7 +224,7 @@
     $('options').scrollLeft = 0;
     requestAnimationFrame(updateOptionScrollbar);
 
-    $('wishFields').hidden = step !== 4 || completed;
+    $('wishFields').hidden = step !== 4 || lit;
     $('backButton').disabled = step === 0;
     $('nextButton').textContent = `${current.next}  →`;
     $('nextButton').hidden = lit;
@@ -235,8 +235,8 @@
     $('resultPreview').hidden = !completed;
     // 重放步骤内容的进场动画
     const content = document.querySelector('.step-content');
-    content.classList.toggle('wish-step', step === 4 && !completed);
-    content.classList.toggle('result-step', completed);
+    content.classList.toggle('wish-step', step === 4 && !lit);
+    content.classList.toggle('result-step', lit);
     content.classList.remove('enter');
     void content.offsetWidth;
     content.classList.add('enter');
@@ -379,7 +379,7 @@
     });
   }
 
-  $('backButton').onclick = () => goToStep(Math.max(0, step - 1));
+  $('backButton').onclick = () => goToStep(lit ? 4 : Math.max(0, step - 1));
   // 点击画布（非拖拽）切换灯体自转；提示文字跟随状态与设备变化
   let downX = 0, downY = 0;
   const hint = $('stageHint');
