@@ -220,7 +220,7 @@ button:focus, button:focus-visible, a:focus, a:focus-visible { outline: 2px soli
 .collection-grid > p { grid-column: 1 / -1; padding: 64px 20px; text-align: center; color: var(--muted); border: 1px dashed var(--line-strong); }
 .saved { border: 1px solid var(--line); background: var(--card); padding: 12px; min-width: 0; transition: border-color .2s var(--ease), box-shadow .2s var(--ease); }
 .saved:hover { border-color: var(--line-strong); box-shadow: 0 14px 30px -22px rgba(70, 55, 35, .4); }
-.saved img { width: 100%; aspect-ratio: 3 / 4; object-fit: contain; background: #172b2d; }
+.saved img { width: 100%; aspect-ratio: 4 / 5; object-fit: contain; background: #f4efe4; }
 .saved h3 { font-size: 15px; font-weight: 400; letter-spacing: 1px; overflow-wrap: anywhere; }
 .saved p { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
 
@@ -474,3 +474,15 @@ button:focus, button:focus-visible, a:focus, a:focus-visible { outline: 2px soli
   display: flex; align-items: center; justify-content: center;
   color: #c6b991; font-size: 13px; letter-spacing: 1px; text-align: center; padding: 24px;
 }
+
+/* 结果页背景选择器 */
+.poster-bg { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.poster-bg-label { font-size: 13px; color: #8a7a56; margin-right: 2px; }
+.bg-chip {
+  font: 13px/1 "PingFang SC", "Microsoft YaHei", sans-serif; color: #6e6253;
+  padding: 7px 13px; border: 1px solid var(--line-strong); border-radius: 999px;
+  background: rgba(255, 255, 255, .6); cursor: pointer; transition: all .15s ease;
+}
+.bg-chip:hover { border-color: var(--ink); }
+.bg-chip.is-active { background: var(--ink); color: #fff7e6; border-color: var(--ink); }
+.bg-chip--file { display: inline-flex; align-items: center; }

@@ -26,6 +26,7 @@
   let lastSaved = '';
   let toastTimer;
   let downloading = false;
+  let selectedBg = 'paper';
   let resultImageKey = '';
   let resultImageURL = '';
   let resultRequest = 0;
@@ -33,7 +34,8 @@
   async function renderResultImage() {
     const request = ++resultRequest;
     const design = Object.assign({}, selection);
-    const key = JSON.stringify(design);
+    const bgKey = (selectedBg && selectedBg.src) ? 'custom' : selectedBg;
+    const key = JSON.stringify(design) + '|' + bgKey;
     $('resultImage').hidden = true;
     $('resultStatus').hidden = false;
     $('resultStatus').textContent = '正在生成纪念图…';
@@ -42,7 +44,7 @@
       if (document.fonts) await document.fonts.ready;
       if (!completed || request !== resultRequest) return;
       if (resultImageKey !== key || !resultImageURL) {
-        const url = studio.exportCanvas(design).toDataURL('image/png');
+        const url = studio.exportPoster(design, selectedBg).toDataURL('image/png');
         resultImageURL = url;
         resultImageKey = key;
       }
@@ -277,9 +279,10 @@
     $('downloadButton').textContent = '正在生成高清图…';
     try {
       await document.fonts.ready;
-      const key = JSON.stringify(design);
+      const bgKey = (selectedBg && selectedBg.src) ? 'custom' : selectedBg;
+      const key = JSON.stringify(design) + '|' + bgKey;
       const dataURL = key === resultImageKey && resultImageURL
-        ? resultImageURL : studio.exportCanvas(design).toDataURL('image/png');
+        ? resultImageURL : studio.exportPoster(design, selectedBg).toDataURL('image/png');
       if (completed && key === JSON.stringify(selection)) {
         resultImageKey = key;
         resultImageURL = dataURL;
@@ -415,6 +418,34 @@
   $('restartButton').onclick = () => goToStep(0);
   $('collectionButton').onclick = showCollection;
   $('returnButton').onclick = showCollection;
+
+  // 背景选择：三套极简预设（程序生成）+ 自定义上传
+  const bgChips = Array.from(document.querySelectorAll('.bg-chip[data-bg]'));
+  function setActiveBg(btn) { bgChips.forEach(b => b.classList.toggle('is-active', b === btn)); }
+  bgChips.forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedBg = btn.dataset.bg;
+      studio.exportBackground = selectedBg;
+      setActiveBg(btn);
+      resultImageKey = ''; resultImageURL = '';
+      if (completed) renderResultImage();
+    });
+  });
+  const bgFile = $('bgFile');
+  if (bgFile) bgFile.addEventListener('change', (event) => {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    const img = new Image();
+    img.onload = () => {
+      selectedBg = img;
+      studio.exportBackground = img;
+      setActiveBg(document.querySelector('.bg-chip--file'));
+      resultImageKey = ''; resultImageURL = '';
+      if (completed) renderResultImage();
+    };
+    img.onerror = () => showToast('背景图读取失败');
+    img.src = URL.createObjectURL(file);
+  });
   $('options').addEventListener('scroll', updateOptionScrollbar, { passive: true });
   window.addEventListener('resize', updateOptionScrollbar);
   $('count').textContent = collection.length;

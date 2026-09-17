@@ -1353,12 +1353,15 @@
   class LanternStudio {
     constructor(canvas) {
       this.canvas = canvas;
+      // 宣纸背景复用站点底纹 assets/bg.png（预加载，导出时若已就绪则直接使用）
+      this.bgImage = new Image();
+      this.bgImage.src = 'assets/bg.png';
       this.renderer = null;
       this._paused = false;
       this._qualityDropped = false;
       this._frameCost = 16;
       try {
-        this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true, powerPreference: 'high-performance' });
+        this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true, powerPreference: 'high-performance' });
         this.renderer.setPixelRatio(this._clampedPixelRatio());
         if ('outputColorSpace' in this.renderer) this.renderer.outputColorSpace = THREE.SRGBColorSpace;
         else if ('outputEncoding' in this.renderer) this.renderer.outputEncoding = THREE.sRGBEncoding;
@@ -1595,35 +1598,156 @@
       for (let y = 128; y < height - 128; y += 92) {
         ctx.fillRect(120, y, width - 240, 1);
       }
-      // 装裱：外框、内衬细线与四角记号
-      ctx.strokeStyle = 'rgba(162,136,84,.85)'; ctx.lineWidth = 2;
+      this._drawPosterText(ctx, design, width, height, false);
+      return poster;
+    }
+
+    toDataURL(design) {
+      return this.exportPoster(design, this.exportBackground || 'paper').toDataURL('image/png');
+    }
+
+    // 三套极简背景（程序生成，零新增资源）
+    _minimalBgCanvas(kind) {
+      const w = 1600, h = 2000, c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      const x = c.getContext('2d');
+      const palettes = {
+        paper: [['#f8f3e9', 0], ['#efe7d5', 1]],
+        mist: [['#eaf0ec', 0], ['#d4e0db', 1]],
+        blush: [['#f9ece7', 0], ['#f1d8d2', 1]]
+      };
+      const stops = palettes[kind] || palettes.paper;
+      const g = x.createLinearGradient(0, 0, 0, h);
+      stops.forEach(([c2, s]) => g.addColorStop(s, c2));
+      x.fillStyle = g; x.fillRect(0, 0, w, h);
+      const v = x.createRadialGradient(w / 2, h * 0.42, 180, w / 2, h * 0.42, 1100);
+      v.addColorStop(0, 'rgba(255,255,255,.28)');
+      v.addColorStop(1, 'rgba(120,110,95,.10)');
+      x.fillStyle = v; x.fillRect(0, 0, w, h);
+      return c;
+    }
+
+    // 透明底花灯：仅灯体，保留颜色/纹样/流苏；比默认导出更大
+    _renderLanternTransparent(design, scale = 1.15) {
+      if (!this.renderer) return null;
+      const width = 1600, height = 2000;
+      const scene = new THREE.Scene(); scene.background = null;
+      const model = buildLantern(design, 4);
+      this._sharpenTextures(model);
+      model.traverse(object => {
+        const material = object.material;
+        if (material && material.userData.paperGlow) material.emissiveIntensity = 1.35;
+      });
+      scene.add(model);
+      const bounds = new THREE.Box3().setFromObject(model);
+      const center = bounds.getCenter(new THREE.Vector3());
+      const radius = bounds.getBoundingSphere(new THREE.Sphere()).radius;
+      const camera = new THREE.PerspectiveCamera(38, 1440 / 1400, .1, 100);
+      const sameFrame = design.frame === this.frame;
+      const phi = sameFrame ? this.controls.phi : design.frame === 'lotus' ? 1.02 : 1.42;
+      const theta = sameFrame ? this.controls.theta : design.frame === 'rabbit' ? .18 : .3;
+      const distance = radius / Math.sin(19 * Math.PI / 180) * (1.08 / scale);
+      camera.position.set(Math.sin(phi) * Math.sin(theta), Math.cos(phi), Math.sin(phi) * Math.cos(theta)).multiplyScalar(distance).add(center);
+      camera.lookAt(center);
+      camera.setViewOffset(1440, 1400, -80, -160, width, height);
+      camera.updateProjectionMatrix();
+      camera.updateMatrixWorld();
+      scene.add(new THREE.AmbientLight(0xffffff, .45));
+      scene.add(new THREE.HemisphereLight(0xfff4df, 0x637f7b, .4));
+      const key = new THREE.DirectionalLight(0xfff0d8, .5); key.position.set(3, 5, 6); scene.add(key);
+      const light = new THREE.PointLight(0xffd9a0, 1.1, 16); scene.add(light);
+      const core = new THREE.PointLight(0xffe2b0, 1.6, 9); core.position.copy(center); scene.add(core);
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      const r = this.renderer, size = r.getSize(new THREE.Vector2()), ratio = r.getPixelRatio();
+      try {
+        r.setPixelRatio(1.5); r.setSize(width, height, false);
+        r.render(scene, camera);
+        canvas.getContext('2d').drawImage(r.domElement, 0, 0, width, height);
+      } finally {
+        r.setPixelRatio(ratio); r.setSize(size.x, size.y, false);
+        disposeObject(scene);
+        r.render(this.scene, this.camera);
+      }
+      return canvas;
+    }
+
+    // 合成海报：极简预设 / 自定义背景 + 柔光晕 + 透明花灯（放大）
+    exportPoster(design = this.selection, background = 'paper') {
+      if (!this.renderer) return this._staticPoster(design);
+      const width = 1600, height = 2000;
+      const poster = document.createElement('canvas');
+      poster.width = width; poster.height = height;
+      const ctx = poster.getContext('2d');
+      const isPaper = background === 'paper';
+      const custom = background && (background instanceof HTMLImageElement || background instanceof HTMLCanvasElement);
+      // 先铺一层不透明的底色，避免背景图透明/未铺满处透出容器深色而显黑边
+      ctx.fillStyle = isPaper ? '#f4efe4' : '#ffffff';
+      ctx.fillRect(0, 0, width, height);
+      if (isPaper && this.bgImage && this.bgImage.complete && this.bgImage.naturalWidth) {
+        // 宣纸背景：复用站点底纹 assets/bg.png，等比铺满整张海报
+        const iw = this.bgImage.naturalWidth, ih = this.bgImage.naturalHeight;
+        const s = Math.max(width / iw, height / ih);
+        ctx.drawImage(this.bgImage, (width - iw * s) / 2, (height - ih * s) / 2, iw * s, ih * s);
+      } else if (custom) {
+        const iw = background.width || background.naturalWidth, ih = background.height || background.naturalHeight;
+        const s = Math.max(width / iw, height / ih);
+        ctx.drawImage(background, (width - iw * s) / 2, (height - ih * s) / 2, iw * s, ih * s);
+      } else if (isPaper) {
+        // 兜底：bg.png 尚未加载完成时退回程序生成的米色宣纸
+        ctx.drawImage(this._minimalBgCanvas('paper'), 0, 0);
+      } else {
+        return this.exportCanvas(design); // 兜底回夜色版
+      }
+      let lantern = null;
+      try { lantern = this._renderLanternTransparent(design, 1.15); } catch (e) { lantern = null; }
+      if (lantern) {
+        const cx = width / 2, cy = height * 0.44;
+        const glow = ctx.createRadialGradient(cx, cy, 60, cx, cy, 660);
+        glow.addColorStop(0, 'rgba(255,221,150,.46)');
+        glow.addColorStop(.5, 'rgba(255,206,140,.16)');
+        glow.addColorStop(1, 'rgba(255,206,140,0)');
+        ctx.fillStyle = glow; ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(lantern, 0, 0, width, height);
+      }
+      this._drawPosterText(ctx, design, width, height, isPaper || custom ? true : false);
+      return poster;
+    }
+
+    _drawPosterText(ctx, design, width, height, light = false) {
+      const ink = light ? {
+        frame: 'rgba(150,120,80,.7)', inner: 'rgba(150,120,80,.32)', corner: 'rgba(150,120,80,.7)',
+        label: '#9a7b4a', title: '#4a3a26', wish: '#5e5444', bottom: '#8a7a56'
+      } : {
+        frame: 'rgba(162,136,84,.85)', inner: 'rgba(162,136,84,.3)', corner: 'rgba(207,184,132,.9)',
+        label: '#d1b77f', title: '#f9e8bf', wish: '#d4c7a4', bottom: '#9a8a64'
+      };
+      ctx.strokeStyle = ink.frame; ctx.lineWidth = 2;
       ctx.strokeRect(48, 48, width - 96, height - 96);
-      ctx.strokeStyle = 'rgba(162,136,84,.3)'; ctx.lineWidth = 1;
+      ctx.strokeStyle = ink.inner; ctx.lineWidth = 1;
       ctx.strokeRect(62, 62, width - 124, height - 124);
-      ctx.strokeStyle = 'rgba(207,184,132,.9)'; ctx.lineWidth = 2;
+      ctx.strokeStyle = ink.corner; ctx.lineWidth = 2;
       [[34, 34, 1, 1], [width - 34, 34, -1, 1], [34, height - 34, 1, -1], [width - 34, height - 34, -1, -1]].forEach(([x, y, sx, sy]) => {
         ctx.beginPath();
         ctx.moveTo(x, y + sy * 20); ctx.lineTo(x, y); ctx.lineTo(x + sx * 20, y);
         ctx.stroke();
       });
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      // 顶部落款：一枚小印与品名
       ctx.fillStyle = '#a25843';
       ctx.fillRect(width / 2 - 25, 92, 50, 50);
       ctx.strokeStyle = 'rgba(255,240,220,.4)'; ctx.lineWidth = 1;
       ctx.strokeRect(width / 2 - 20, 97, 40, 40);
       ctx.fillStyle = '#f8ecd8'; ctx.font = '32px "Songti SC","SimSun",serif';
       ctx.fillText('灯', width / 2, 118);
-      ctx.fillStyle = '#d1b77f'; ctx.font = '23px "PingFang SC","Microsoft YaHei",sans-serif';
+      ctx.fillStyle = ink.label; ctx.font = '23px "PingFang SC","Microsoft YaHei",sans-serif';
       ctx.fillText('花 灯 手 作 · 灯 下 有 愿', width / 2, 178);
-      // 灯名：字间拉开全角空隙，更显疏朗
       const title = (design.name || '一盏团圆').split('').join('　');
       let fontSize = 72;
       do { ctx.font = `${fontSize}px "Songti SC","SimSun",serif`; fontSize -= 2; } while (ctx.measureText(title).width > 1280 && fontSize > 30);
-      ctx.fillStyle = '#f9e8bf'; ctx.shadowColor = 'rgba(0,0,0,.42)'; ctx.shadowBlur = 14;
+      ctx.fillStyle = ink.title; ctx.shadowColor = 'rgba(0,0,0,.18)'; ctx.shadowBlur = 10;
       ctx.fillText(title, width / 2, 1600);
       ctx.shadowBlur = 0;
-      ctx.fillStyle = '#d4c7a4'; ctx.font = '31px "PingFang SC","Microsoft YaHei",sans-serif';
+      ctx.fillStyle = ink.wish; ctx.font = '31px "PingFang SC","Microsoft YaHei",sans-serif';
       const wish = design.wish || '愿灯火可亲，所念皆如愿';
       const lines = []; let line = '';
       for (const char of wish) {
@@ -1632,8 +1756,7 @@
       }
       if (line) lines.push(line);
       lines.slice(0, 3).forEach((text, i) => ctx.fillText(text, width / 2, 1706 + i * 52));
-      // 分隔线中断处嵌一枚菱形记号
-      ctx.fillStyle = '#8d7c58';
+      ctx.fillStyle = ink.bottom;
       ctx.fillRect(width / 2 - 34, 1848, 20, 2);
       ctx.fillRect(width / 2 + 14, 1848, 20, 2);
       ctx.save();
@@ -1641,13 +1764,8 @@
       ctx.rotate(Math.PI / 4);
       ctx.fillRect(-4, -4, 8, 8);
       ctx.restore();
-      ctx.fillStyle = '#9a8a64'; ctx.font = '22px "PingFang SC","Microsoft YaHei",sans-serif';
+      ctx.fillStyle = ink.bottom; ctx.font = '22px "PingFang SC","Microsoft YaHei",sans-serif';
       ctx.fillText('一 盏 灯 · 一 份 心 意', width / 2, 1902);
-      return poster;
-    }
-
-    toDataURL(design) {
-      return this.exportCanvas(design).toDataURL('image/png');
     }
 
     _animate() {
