@@ -258,12 +258,19 @@
     } else if (pattern === 'haitang') {
       x.save();
       x.translate(256, 256); x.scale(1, aspect); x.translate(-256, -256);
-      x.globalAlpha = .65; x.lineWidth = 4;
-      x.beginPath(); x.moveTo(147, 393);
-      x.bezierCurveTo(200, 353, 230, 282, 285, 212);
-      x.quadraticCurveTo(314, 177, 356, 151); x.stroke();
-      x.lineWidth = 2.5;
-      x.beginPath(); x.moveTo(213, 302); x.quadraticCurveTo(169, 286, 157, 255); x.stroke();
+      // A tapered old branch anchors the painting; fine stems carry each blossom.
+      x.fillStyle = p.ink; x.globalAlpha = .62;
+      x.beginPath(); x.moveTo(63, 429);
+      x.bezierCurveTo(121, 383, 157, 348, 204, 297);
+      x.bezierCurveTo(259, 276, 307, 250, 363, 194);
+      x.bezierCurveTo(318, 253, 269, 286, 213, 307);
+      x.bezierCurveTo(170, 355, 129, 400, 70, 441); x.closePath(); x.fill();
+      x.lineWidth = 2.3;
+      [[144,365,127,300,97,270], [204,302,180,243,214,203],
+        [257,281,280,215,302,179], [315,241,355,250,399,230],
+        [351,207,370,173,414,158], [179,337,229,344,268,321]].forEach(([sx,sy,cx,cy,ex,ey]) => {
+        x.beginPath(); x.moveTo(sx,sy); x.quadraticCurveTo(cx,cy,ex,ey); x.stroke();
+      });
       const leaf = (cx, cy, angle, size) => {
         x.save(); x.translate(cx, cy); x.rotate(angle); x.scale(size, size);
         x.beginPath(); x.moveTo(0, 0);
@@ -271,23 +278,24 @@
         x.bezierCurveTo(32, -2, 13, 7, 0, 0);
         x.globalAlpha = .48; x.fill(); x.restore();
       };
-      leaf(187, 349, -2.1, 1);
-      leaf(227, 280, .9, .85);
-      leaf(318, 178, -.65, .7);
+      leaf(136, 346, -2.15, 1.05); leaf(145, 344, -.75, .75);
+      leaf(199, 268, -2.3, .85); leaf(205, 266, -.6, .62);
+      leaf(279, 220, .8, .85); leaf(345, 246, .9, .8);
+      leaf(375, 179, -1.4, .65); leaf(236, 333, .9, .7);
       const flower = (cx, cy, size, rotation) => {
         x.save(); x.translate(cx, cy); x.rotate(rotation); x.scale(size, size);
         // One continuous silhouette avoids overlapping outlines at the centre.
         x.beginPath();
         for (let i = 0; i <= 180; i++) {
           const a = i / 180 * Math.PI * 2 - Math.PI / 2;
-          const r = 39 + 11 * Math.cos(5 * (a + Math.PI / 2));
-          const px = Math.cos(a) * r, py = Math.sin(a) * r;
+          const r = 39 + 11 * Math.cos(5 * (a + Math.PI / 2)) + 2 * Math.sin(3 * a);
+          const px = Math.cos(a) * r, py = Math.sin(a) * r * .86;
           if (i === 0) x.moveTo(px, py); else x.lineTo(px, py);
         }
         x.closePath();
         x.globalAlpha = 1; x.fillStyle = p.paper; x.fill();
         x.fillStyle = p.ink; x.globalAlpha = .24; x.fill();
-        x.globalAlpha = .9; x.lineWidth = 2.5; x.stroke();
+        x.globalAlpha = .75; x.lineWidth = 1.8; x.stroke();
         x.lineWidth = 1.4;
         for (let i = 0; i < 9; i++) {
           const a = i * Math.PI * 2 / 9;
@@ -297,19 +305,30 @@
         }
         x.restore();
       };
-      flower(226, 292, 1.05, .18);
-      flower(304, 200, .75, -.2);
-      flower(157, 253, .55, .35);
+      flower(202, 249, .72, .2); flower(228, 219, .52, -.4);
+      flower(182, 211, .46, .65); flower(293, 204, .66, -.3);
+      flower(322, 182, .48, .5); flower(372, 236, .52, -.45);
+      flower(111, 282, .42, .2); flower(262, 324, .38, -.6);
+      [[97,270,-.5],[214,203,.25],[302,179,.4],[399,230,1],[414,158,.65]].forEach(([cx,cy,a]) => {
+        x.save(); x.translate(cx,cy); x.rotate(a); x.globalAlpha = .65;
+        x.beginPath(); x.ellipse(0,-7,5,9,0,0,Math.PI*2); x.fill(); x.restore();
+      });
       x.restore();
     } else if (pattern === 'yulan') {
       x.save();
       x.translate(256, 256); x.scale(1, aspect); x.translate(-256, -256);
-      x.globalAlpha = .7; x.lineWidth = 4;
-      x.beginPath(); x.moveTo(165, 410);
-      x.bezierCurveTo(220, 374, 259, 302, 285, 236); x.stroke();
-      x.lineWidth = 2.6;
-      x.beginPath(); x.moveTo(223, 344); x.quadraticCurveTo(187, 320, 167, 277); x.stroke();
-      x.beginPath(); x.moveTo(265, 280); x.quadraticCurveTo(335, 274, 354, 225); x.stroke();
+      x.globalAlpha = .62; x.fillStyle = p.ink;
+      x.beginPath(); x.moveTo(109,447);
+      x.bezierCurveTo(157,397,199,361,218,311);
+      x.bezierCurveTo(235,264,261,231,311,208);
+      x.bezierCurveTo(271,236,247,272,230,318);
+      x.bezierCurveTo(208,372,164,414,122,451); x.closePath(); x.fill();
+      x.lineWidth = 3;
+      [[194,368,161,334,155,294], [225,320,298,306,342,260],
+        [246,269,224,217,232,182], [292,218,338,212,379,170],
+        [154,412,121,383,92,372]].forEach(([sx,sy,cx,cy,ex,ey]) => {
+        x.beginPath(); x.moveTo(sx,sy); x.quadraticCurveTo(cx,cy,ex,ey); x.stroke();
+      });
       const flower = (cx, cy, scale, angle) => {
         x.save(); x.translate(cx, cy); x.rotate(angle); x.scale(scale, scale);
         const petal = (draw, wash) => {
@@ -317,28 +336,39 @@
           // Opaque paper underpainting hides the rear petals and branch.
           x.globalAlpha = 1; x.fillStyle = p.paper; x.fill();
           x.fillStyle = p.ink; x.globalAlpha = wash; x.fill();
-          x.globalAlpha = .85; x.lineWidth = 2.6; x.stroke();
+          x.globalAlpha = .72; x.lineWidth = 1.8; x.stroke();
         };
         petal(() => {
-          x.moveTo(0, 0); x.bezierCurveTo(-33, -28, -26, -80, 0, -108);
-          x.bezierCurveTo(29, -78, 30, -30, 0, 0);
+          x.moveTo(0, 0); x.bezierCurveTo(-29, -28, -33, -85, -7, -105);
+          x.bezierCurveTo(25, -97, 28, -32, 0, 0);
         }, .32);
         petal(() => {
-          x.moveTo(0, 0); x.bezierCurveTo(-39, -1, -64, -38, -62, -72);
-          x.bezierCurveTo(-25, -67, -4, -36, 0, 0);
+          x.moveTo(0, 0); x.bezierCurveTo(-39, -1, -69, -30, -68, -61);
+          x.bezierCurveTo(-37, -67, -6, -36, 0, 0);
         }, .2);
         petal(() => {
-          x.moveTo(0, 0); x.bezierCurveTo(40, -2, 66, -37, 61, -77);
-          x.bezierCurveTo(28, -69, 4, -36, 0, 0);
+          x.moveTo(0, 0); x.bezierCurveTo(40, -2, 65, -41, 51, -79);
+          x.bezierCurveTo(24, -73, 4, -36, 0, 0);
         }, .26);
         x.globalAlpha = .45; x.lineWidth = 1.5;
         x.beginPath(); x.moveTo(0, -7); x.quadraticCurveTo(-26, -25, -46, -54); x.stroke();
         x.beginPath(); x.moveTo(7, -9); x.quadraticCurveTo(30, -29, 47, -57); x.stroke();
         x.restore();
       };
-      flower(285, 238, 1, .13);
-      flower(168, 280, .61, -.42);
-      flower(354, 227, .43, .38);
+      flower(309, 209, .79, .38);
+      flower(155, 295, .6, -.63);
+      flower(341, 261, .56, .9);
+      // Closed buds on the upper branch balance the three open flowers.
+      [[232,182,-.17,.8],[379,170,.6,.65],[92,372,-.9,.5]].forEach(([cx,cy,a,s]) => {
+        x.save(); x.translate(cx,cy); x.rotate(a); x.scale(s,s);
+        x.beginPath(); x.moveTo(0,0);
+        x.bezierCurveTo(-18,-15,-17,-42,-3,-56);
+        x.bezierCurveTo(17,-48,19,-17,0,0); x.closePath();
+        x.globalAlpha = 1; x.fillStyle = p.paper; x.fill();
+        x.fillStyle = p.ink; x.globalAlpha = .3; x.fill();
+        x.globalAlpha = .65; x.lineWidth = 1.8; x.stroke();
+        x.beginPath(); x.moveTo(0,0); x.quadraticCurveTo(5,-24,-3,-44); x.stroke(); x.restore();
+      });
       x.restore();
     } else if (pattern === 'starMoon') {
       x.save();
