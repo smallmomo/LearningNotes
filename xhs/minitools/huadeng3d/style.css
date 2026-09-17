@@ -480,9 +480,9 @@ button:focus, button:focus-visible, a:focus, a:focus-visible { outline: 2px soli
 .poster-bg-label { font-size: 13px; color: #8a7a56; margin-right: 2px; }
 .bg-chip {
   font: 13px/1 "PingFang SC", "Microsoft YaHei", sans-serif; color: #6e6253;
-  padding: 7px 13px; border: 1px solid var(--line-strong); border-radius: 999px;
+  padding: 7px 13px; border: 1px solid transparent; border-radius: 999px;
   background: rgba(255, 255, 255, .6); cursor: pointer; transition: all .15s ease;
 }
-.bg-chip:hover { border-color: var(--ink); }
-.bg-chip.is-active { background: var(--ink); color: #fff7e6; border-color: var(--ink); }
+.bg-chip:hover { border-color: var(--line-strong); }
+.bg-chip.is-active { background: rgba(145, 84, 62, .12); color: var(--accent); border-color: var(--accent); font-weight: 600; }
 .bg-chip--file { display: inline-flex; align-items: center; }
