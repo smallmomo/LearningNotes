@@ -233,7 +233,7 @@
   function setupGraph() {
     ctx = new AudioEngine();
     master = ctx.createGain();
-    master.gain.value = 0.16;
+    master.gain.value = 0.1;
     sfxMaster = ctx.createGain();
     sfxMaster.gain.value = 0.22;
 
