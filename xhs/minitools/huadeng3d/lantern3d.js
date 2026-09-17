@@ -1356,6 +1356,7 @@
       // 宣纸背景复用站点底纹 assets/bg.png（预加载，导出时若已就绪则直接使用）
       this.bgImage = new Image();
       this.bgImage.src = 'assets/bg.png';
+      this.exportBgMode = 'paper'; // 自定义背景时沿用的最近预设模式（'paper' | 'dark'）
       this.renderer = null;
       this._paused = false;
       this._qualityDropped = false;
@@ -1627,6 +1628,26 @@
       return c;
     }
 
+    // 深色背景：沉静夜色纵向渐变 + 中心暖光晕，衬托花灯
+    _darkBgCanvas() {
+      const w = 1600, h = 2000, c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      const x = c.getContext('2d');
+      const g = x.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, '#061216');
+      g.addColorStop(.24, '#10282b');
+      g.addColorStop(.52, '#19342f');
+      g.addColorStop(.78, '#0e1d20');
+      g.addColorStop(1, '#040a0e');
+      x.fillStyle = g; x.fillRect(0, 0, w, h);
+      const v = x.createRadialGradient(w / 2, h * 0.40, 120, w / 2, h * 0.40, 1180);
+      v.addColorStop(0, 'rgba(176,103,61,.22)');
+      v.addColorStop(.45, 'rgba(176,103,61,.05)');
+      v.addColorStop(1, 'rgba(176,103,61,0)');
+      x.fillStyle = v; x.fillRect(0, 0, w, h);
+      return c;
+    }
+
     // 透明底花灯：仅灯体，保留颜色/纹样/流苏；比默认导出更大
     _renderLanternTransparent(design, scale = 1.15) {
       if (!this.renderer) return null;
@@ -1680,15 +1701,23 @@
       poster.width = width; poster.height = height;
       const ctx = poster.getContext('2d');
       const isPaper = background === 'paper';
+      const isDark = background === 'dark';
       const custom = background && (background instanceof HTMLImageElement || background instanceof HTMLCanvasElement);
+      // 自定义背景沿用最近一次预设（宣纸/深色）的基调，决定底色与文字颜色
+      const baseMode = custom ? (this.exportBgMode || 'paper') : (isDark ? 'dark' : 'paper');
       // 先铺一层不透明的底色，避免背景图透明/未铺满处透出容器深色而显黑边
-      ctx.fillStyle = isPaper ? '#f4efe4' : '#ffffff';
+      if (baseMode === 'dark') ctx.fillStyle = '#0a1218';
+      else if (isPaper) ctx.fillStyle = '#f4efe4';
+      else ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, width, height);
       if (isPaper && this.bgImage && this.bgImage.complete && this.bgImage.naturalWidth) {
         // 宣纸背景：复用站点底纹 assets/bg.png，等比铺满整张海报
         const iw = this.bgImage.naturalWidth, ih = this.bgImage.naturalHeight;
         const s = Math.max(width / iw, height / ih);
         ctx.drawImage(this.bgImage, (width - iw * s) / 2, (height - ih * s) / 2, iw * s, ih * s);
+      } else if (isDark) {
+        // 深色背景：沉静夜色渐变 + 顶部暖光，衬托花灯
+        ctx.drawImage(this._darkBgCanvas(), 0, 0, width, height);
       } else if (custom) {
         const iw = background.width || background.naturalWidth, ih = background.height || background.naturalHeight;
         const s = Math.max(width / iw, height / ih);
@@ -1710,7 +1739,8 @@
         ctx.fillStyle = glow; ctx.fillRect(0, 0, width, height);
         ctx.drawImage(lantern, 0, 0, width, height);
       }
-      this._drawPosterText(ctx, design, width, height, isPaper || custom ? true : false);
+      // 文字颜色：深色基调用浅色字（light=false→浅墨），宣纸/自定义沿用宣纸基调用深墨（light=true）
+      this._drawPosterText(ctx, design, width, height, baseMode === 'paper');
       return poster;
     }
 

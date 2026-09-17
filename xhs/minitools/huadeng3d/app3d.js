@@ -27,6 +27,7 @@
   let toastTimer;
   let downloading = false;
   let selectedBg = 'paper';
+  let selectedBgMode = 'paper'; // 记录最近一次预设背景（'paper' | 'dark'），自定义时沿用其文字颜色
   let resultImageKey = '';
   let resultImageURL = '';
   let resultRequest = 0;
@@ -425,7 +426,9 @@
   bgChips.forEach(btn => {
     btn.addEventListener('click', () => {
       selectedBg = btn.dataset.bg;
+      selectedBgMode = btn.dataset.bg; // 同步记录预设模式（'paper' | 'dark'）
       studio.exportBackground = selectedBg;
+      studio.exportBgMode = selectedBgMode;
       setActiveBg(btn);
       resultImageKey = ''; resultImageURL = '';
       if (completed) renderResultImage();
