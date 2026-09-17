@@ -92,7 +92,7 @@
       ]
     },
     {
-      label: '点灯', title: '写下名字与心愿', description: '留下一句祝福，再点亮这盏花灯。',
+      label: '点灯', title: '写下名字与心愿', description: '',
       caption: '只等这一点光', subtitle: '愿这盏亲手做的灯，照见你心里的温暖。', next: '点亮花灯'
     }
   ];
