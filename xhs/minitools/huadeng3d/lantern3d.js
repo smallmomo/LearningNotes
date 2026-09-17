@@ -1534,9 +1534,9 @@
       bgGrad.addColorStop(.76, '#101e22');
       bgGrad.addColorStop(1, '#05090d');
       bgCtx.fillStyle = bgGrad; bgCtx.fillRect(0, 0, 64, 1024);
-      const warm = bgCtx.createRadialGradient(32, 430, 0, 32, 430, 440);
-      warm.addColorStop(0, 'rgba(176,103,61,.24)');
-      warm.addColorStop(.42, 'rgba(176,103,61,.08)');
+      const warm = bgCtx.createRadialGradient(32, 430, 0, 32, 430, 300);
+      warm.addColorStop(0, 'rgba(176,103,61,.12)');
+      warm.addColorStop(.42, 'rgba(176,103,61,.03)');
       warm.addColorStop(1, 'rgba(176,103,61,0)');
       bgCtx.fillStyle = warm; bgCtx.fillRect(0, 0, 64, 1024);
       const bgTex = new THREE.CanvasTexture(bgCanvas);
@@ -1545,6 +1545,11 @@
       const scene = new THREE.Scene(); scene.background = bgTex;
       const model = buildLantern(design, 4);
       this._sharpenTextures(model);
+      // Keep printed details distinct in the exported image's brightest area.
+      model.traverse(object => {
+        const material = object.material;
+        if (material && material.userData.paperGlow) material.emissiveIntensity = 1.25;
+      });
       scene.add(model);
       const bounds = new THREE.Box3().setFromObject(model);
       const center = bounds.getCenter(new THREE.Vector3());
