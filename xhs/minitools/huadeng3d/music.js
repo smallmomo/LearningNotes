@@ -190,7 +190,7 @@
     if (button.classList.contains('option')) return 'select';
     if (button.id === 'backButton' || button.id === 'nextButton' || button.id === 'generateButton') return '';
     if (button.id === 'downloadButton' || button.id === 'saveButton' || button.id === 'restartButton') return '';
-    if (button.id === 'returnButton') return 'select';
+    if (button.id === 'returnButton' || button.id === 'collectionButton') return '';
     return 'select';
   }
 

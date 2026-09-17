@@ -4,14 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>花灯手作 · 3D 立体版</title>
-    <link rel="stylesheet" href="style.css?v=20260917-result1" />
+    <link rel="stylesheet" href="style.css?v=20260917-collection-sticky1" />
     <style>
       #artwork3d { width: 100%; height: 100%; display: block; touch-action: pan-y; cursor: grab; }
       #artwork3d:active { cursor: grabbing; }
     </style>
     <script defer src="three.min.js"></script>
     <script defer src="lantern3d.js?v=20260917-export-glow1"></script>
-    <script defer src="app3d.js?v=20260917-light-first1"></script>
+    <script defer src="app3d.js?v=20260917-header-toggle1"></script>
     <script defer src="music.js?v=20260917-music9"></script>
   </head>
   <body>
@@ -62,7 +62,7 @@
       </section>
 
       <section class="collection" id="collection" hidden>
-        <div class="collection-heading"><div><span class="eyebrow">MY LANTERNS</span><h2>灯火可亲</h2></div><button class="quiet" id="returnButton">返回手作 →</button></div>
+        <div class="collection-heading"><div><span class="eyebrow">MY LANTERNS</span><h2>灯火可亲</h2></div><button class="quiet" id="returnButton" hidden>← 返回手作</button></div>
         <div class="collection-grid" id="collectionGrid"></div>
       </section>
       <div class="toast" id="toast" role="status" aria-live="polite"></div>

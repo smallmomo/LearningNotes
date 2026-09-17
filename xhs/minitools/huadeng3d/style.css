@@ -207,8 +207,14 @@ button:focus, button:focus-visible, a:focus, a:focus-visible { outline: 2px soli
 
 /* ---------- 收藏 ---------- */
 .collection { padding-top: 24px; }
-.collection-heading { display: flex; justify-content: space-between; align-items: center; }
-.collection h2 { font-family: var(--serif); font-weight: 400; letter-spacing: 3px; }
+.collection-heading {
+  display: flex; justify-content: space-between; align-items: center;
+  position: sticky; top: 0; z-index: 2;
+  padding-bottom: 12px; margin-bottom: 8px;
+  background: linear-gradient(180deg, var(--paper) 70%, rgba(246, 242, 232, 0) 100%);
+}
+.collection-heading h2 { margin-right: auto; }
+.collection h2 { font-family: var(--serif); font-weight: 400; letter-spacing: 3px; margin: 6px 0 0; }
 .collection-grid { display: grid; grid-template-columns: repeat(3, 1fr); grid-gap: 20px; margin-top: 20px; }
 .collection-grid > p { grid-column: 1 / -1; padding: 64px 20px; text-align: center; color: var(--muted); border: 1px dashed var(--line-strong); }
 .saved { border: 1px solid var(--line); background: var(--card); padding: 12px; min-width: 0; transition: border-color .2s var(--ease), box-shadow .2s var(--ease); }
@@ -380,8 +386,20 @@ button:focus, button:focus-visible, a:focus, a:focus-visible { outline: 2px soli
   }
   .step-content.wish-step .wish-fields input:last-child { margin-bottom: 0; }
   .step-content.result-step .step-description { margin-bottom: 4px; }
-  .collection { padding: 20px; min-height: 0; overflow-y: auto; padding-bottom: calc(20px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))); }
-  .collection-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .collection { padding: 0 16px 16px; min-height: 0; overflow-y: auto; padding-bottom: calc(16px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))); }
+  .collection-heading {
+    padding: 16px 0 10px; margin-bottom: 4px;
+    background: linear-gradient(180deg, var(--paper) 65%, rgba(249, 244, 220, 0) 100%);
+  }
+  .collection-heading .eyebrow { font-size: 9px; letter-spacing: 3px; }
+  .collection-heading h2 { font-size: 22px; margin-top: 4px; }
+  #returnButton {
+    padding: 8px 12px; font-size: 12px; color: var(--accent);
+    border: 1px solid rgba(142, 68, 61, .25); border-radius: 20px;
+    background: rgba(255, 255, 255, .6);
+  }
+  #returnButton:hover { background: rgba(255, 255, 255, .9); }
+  .collection-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 4px; }
 }
 
 /* 短屏和软键盘弹出时，允许页面滚动以保证输入与操作可达。 */

@@ -334,9 +334,20 @@
     }
   }
 
+  let inCollection = false;
   function showCollection() {
+    if (inCollection) {
+      inCollection = false;
+      $('collection').hidden = true;
+      $('workshop').hidden = false;
+      $('collectionButton').innerHTML = '我的花灯 <span id="count">0</span>';
+      $('count').textContent = collection.length;
+      return;
+    }
+    inCollection = true;
     $('workshop').hidden = true;
     $('collection').hidden = false;
+    $('collectionButton').textContent = '← 返回手作';
     clear($('collectionGrid'));
     if (!collection.length) {
       const message = document.createElement('p');
@@ -403,7 +414,7 @@
   $('saveButton').onclick = saveLantern;
   $('restartButton').onclick = () => goToStep(0);
   $('collectionButton').onclick = showCollection;
-  $('returnButton').onclick = () => { $('collection').hidden = true; $('workshop').hidden = false; };
+  $('returnButton').onclick = showCollection;
   $('options').addEventListener('scroll', updateOptionScrollbar, { passive: true });
   window.addEventListener('resize', updateOptionScrollbar);
   $('count').textContent = collection.length;
