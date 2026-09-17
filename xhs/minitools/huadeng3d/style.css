@@ -116,27 +116,67 @@ button:focus, button:focus-visible, a:focus, a:focus-visible { outline: 2px soli
 /* ---------- 选项卡 ---------- */
 /* 选项放进固定高度的框内独立滚动：滑动只滚选项，画布与其他区域不动 */
 .options {
-  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-gap: 12px;
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-gap: 10px;
   max-height: 300px; overflow-y: auto; align-content: start;
   padding: 4px; margin: -4px; /* 补偿滚动条占位，避免布局跳动 */
   scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent;
   overscroll-behavior: contain; /* 滚到头不带动整页 */
 }
 .option {
-  position: relative; border: 1px solid var(--line); background: transparent;
-  padding: 14px 24px 14px 12px; text-align: left; display: flex; align-items: center; gap: 11px; min-height: 72px; overflow: hidden; border-radius: 3px;
-  transition: border-color .2s var(--ease), background-color .2s var(--ease), box-shadow .2s var(--ease), transform .15s var(--ease);
+  position: relative;
+  border: 2px solid transparent;
+  background: #fff;
+  padding: 16px 8px 14px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  min-height: 120px;
+  overflow: hidden;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px -6px rgba(65, 50, 34, .15);
+  transition: border-color .2s var(--ease), background-color .2s var(--ease), transform .15s var(--ease);
 }
-.option:hover { border-color: var(--line-strong); background: rgba(255, 252, 244, .65); }
+.option:hover { border-color: rgba(145, 84, 62, .3); }
 .option:active { transform: translateY(1px); }
-.option.selected { border-color: var(--accent); background: var(--accent-wash); box-shadow: inset 0 0 0 1px rgba(145, 84, 62, .12); }
-.option.selected::after { content: ''; position: absolute; right: 10px; top: 10px; width: 7px; height: 4px; border-left: 1.5px solid var(--accent); border-bottom: 1.5px solid var(--accent); transform: rotate(-45deg); }
-.option .sample { flex: 0 0 30px; height: 30px; display: grid; place-items: center; color: #9b7950; font-family: var(--serif); font-size: 24px; }
-.option .swatch { width: 26px; height: 26px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .1), 0 2px 5px -2px rgba(60, 45, 30, .35); }
-.option strong { font-size: 13px; font-weight: 400; display: block; letter-spacing: .5px; }
-.option small { color: var(--muted); display: block; font-size: 10px; margin-top: 5px; letter-spacing: .5px; }
-.option .frame-sample { flex-basis: 40px; height: 46px; }
-.frame-sample svg { display: block; width: 40px; height: 46px; }
+.option.selected {
+  border-color: var(--accent);
+  background: rgba(145, 84, 62, .06);
+}
+.option .sample {
+  flex: 0 0 auto;
+  width: 100%;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  color: #9b7950;
+  font-family: var(--serif);
+  font-size: 28px;
+}
+.option .swatch {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .1), 0 2px 8px -3px rgba(60, 45, 30, .3);
+}
+.option strong {
+  font-size: 14px;
+  font-weight: 500;
+  display: block;
+  letter-spacing: 1px;
+  color: var(--ink);
+}
+.option small {
+  color: var(--muted);
+  display: block;
+  font-size: 11px;
+  margin-top: 2px;
+  letter-spacing: .5px;
+  line-height: 1.4;
+}
+.option .frame-sample { width: 48px; height: 48px; }
+.frame-sample svg { display: block; width: 100%; height: 100%; }
 
 /* ---------- 心愿输入 ---------- */
 .wish-fields label { display: block; font-size: 12px; color: #737769; margin: 12px 0 8px; letter-spacing: 1px; }
@@ -256,31 +296,32 @@ button:focus, button:focus-visible, a:focus, a:focus-visible { outline: 2px soli
   .step-description { color: #7c796f; font-size: 11px; line-height: 1.65; min-height: 0; margin: 4px 0 10px; }
   .step-content { flex: 1; display: flex; flex-direction: column; min-height: 0; }
   .option {
-    min-height: 68px; padding: 9px 22px 9px 11px; gap: 8px;
-    border-color: var(--line); border-radius: 12px; background: rgba(255, 255, 255, .68);
-    box-shadow: 0 5px 14px -14px rgba(65, 50, 34, .55);
+    min-height: 110px; padding: 12px 8px 10px; gap: 8px;
+    border: 2px solid transparent; border-radius: 12px; background: #fff;
+    box-shadow: 0 2px 10px -6px rgba(65, 50, 34, .18);
+    flex-direction: column; justify-content: flex-start;
+    text-align: center;
   }
-  .option:hover { background: rgba(255, 255, 255, .86); border-color: var(--line-strong); }
-  .option.selected { border-color: var(--accent); background: rgba(142, 68, 61, .07); box-shadow: inset 0 0 0 1px rgba(142, 68, 61, .09); }
-  .option.selected::after { right: 10px; top: 10px; }
-  .option .sample { flex-basis: 30px; width: 30px; height: 30px; }
-  .option .frame-sample { flex-basis: 36px; width: 36px; height: 40px; }
-  .frame-sample svg { width: 36px; height: 40px; }
-  .option strong { font-size: 13px; }
-  .option small { margin-top: 3px; font-size: 9px; }
+  .option:hover { background: #fff; }
+  .option.selected { border-color: var(--accent); background: rgba(145, 84, 62, .06); }
+  .option .sample { flex-basis: auto; width: 100%; height: 42px; }
+  .option .sample .swatch { width: 32px; height: 32px; }
+  .option .frame-sample { width: 42px; height: 42px; flex-basis: auto; }
+  .frame-sample svg { width: 100%; height: 100%; }
+  .option strong { font-size: 13px; font-weight: 500; }
+  .option small { margin-top: 2px; font-size: 10px; display: block; }
   .options {
-    display: grid; grid-template-columns: none; grid-template-rows: 68px;
-    grid-auto-flow: column; grid-auto-columns: minmax(148px, 46vw);
-    gap: 8px; max-height: none; flex: 0 0 80px; min-height: 80px;
-    padding: 1px 1px 9px; margin: 0; overflow-x: auto; overflow-y: hidden;
+    display: grid; grid-template-columns: none; grid-template-rows: 110px;
+    grid-auto-flow: column; grid-auto-columns: minmax(85px, 22vw);
+    gap: 8px; max-height: none; flex: 0 0 120px; min-height: 120px;
+    padding: 2px 2px 10px; margin: 0 -2px; overflow-x: auto; overflow-y: hidden;
     background: transparent; border-radius: 0; box-shadow: none;
-    -webkit-mask-image: none; mask-image: none;
     scroll-snap-type: x proximity; scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
   }
   .option { scroll-snap-align: start; }
   .options::-webkit-scrollbar { display: none; }
-  .options.empty { display: none; flex: 0 0 auto; min-height: 0; background: none; box-shadow: none; -webkit-mask-image: none; mask-image: none; padding: 0; }
+  .options.empty { display: none; flex: 0 0 auto; min-height: 0; background: none; box-shadow: none; padding: 0; margin: 0; }
   .option-scrollbar {
     position: relative; flex: 0 0 4px; height: 4px; margin: 3px 1px 8px;
     overflow: hidden; border-radius: 4px; background: rgba(207, 197, 179, .45);
